@@ -787,6 +787,7 @@
     @media print {
       #landing, .hdr-actions, #sidebar, .hdr-back,
       .hdr-div, .view-tog, .hdr-spacer, #calNav { display: none !important; }
+      #estimateBar { border-bottom: 1px solid #ccc !important; margin-bottom: 12px; }
       #app { height: auto; }
       .app-body { display: block; }
       #mainArea { padding: 0; overflow: visible; }
@@ -812,6 +813,32 @@
       @page { margin: 18mm; size: A4 landscape; }
       #toast, #successToast { display: none !important; }
     }
+
+    /* iOS-style toggle */
+    .toggle-wrap { display:inline-flex; align-items:center; cursor:pointer; }
+    .toggle-wrap input[type="checkbox"] { display:none; }
+    .toggle-track {
+      width:36px; height:20px;
+      background:var(--border-2);
+      border-radius:10px;
+      position:relative;
+      transition:background .2s;
+      flex-shrink:0;
+    }
+    .toggle-wrap input[type="checkbox"]:checked ~ .toggle-track,
+    .toggle-wrap input[type="checkbox"]:checked + .toggle-track { background:#34C759; }
+    .toggle-thumb {
+      position:absolute;
+      top:2px; left:2px;
+      width:16px; height:16px;
+      border-radius:50%;
+      background:#fff;
+      box-shadow:0 1px 3px rgba(0,0,0,.25);
+      transition:transform .2s;
+    }
+    .toggle-wrap input[type="checkbox"]:checked ~ .toggle-track .toggle-thumb,
+    .toggle-wrap input[type="checkbox"]:checked + .toggle-track .toggle-thumb { transform:translateX(16px); }
+
   </style>
 </head>
 <body>
@@ -881,6 +908,16 @@
     </div>
   </header>
 
+  <div id="estimateBar" class="hidden" style="
+    background:var(--accent-bg,#E4F3EE);border-bottom:1px solid var(--border);
+    padding:7px 20px;display:flex;align-items:center;gap:20px;font-size:12px;
+    color:var(--ink-2);flex-wrap:wrap;
+  ">
+    <span id="estimateBarLabel" style="font-weight:600;color:var(--ink);letter-spacing:.3px;"></span>
+    <span id="estimateBarLabor" class="hidden">Labor: <strong id="estimateBarLaborAmt"></strong></span>
+    <span id="estimateBarMats" class="hidden">Materials: <strong id="estimateBarMatsAmt"></strong></span>
+    <span id="estimateBarTotal" class="hidden" style="font-weight:700;color:var(--ink);"></span>
+  </div>
   <div class="app-body">
     <!-- SIDEBAR -->
     <aside id="sidebar">
@@ -914,6 +951,55 @@
           <label class="sb-label">Accent color</label>
           <input type="color" class="color-input" id="accentInput" value="#111111">
         </div>
+      </div>
+
+      <!-- Estimate -->
+      <div class="sb-sec">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div class="sb-sec-label" style="margin-bottom:0">Estimate</div>
+          <label class="toggle-wrap" title="Show estimate">
+            <input type="checkbox" id="estimateToggle">
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+          </label>
+        </div>
+        <div id="estimatePanel" style="display:none">
+          <div id="estimateBlockedMsg" style="display:none;font-size:11px;color:var(--ink-3);line-height:1.5;padding:6px 0;"></div>
+          <div id="estimateFields">
+            <div class="sb-field">
+              <label class="sb-label">Label</label>
+              <select class="sb-input" id="estimateLabelSel">
+                <option value="Estimate">Estimate</option>
+                <option value="Project Budget">Project Budget</option>
+                <option value="Quote">Quote</option>
+                <option value="Investment">Investment</option>
+              </select>
+            </div>
+            <div class="sb-field">
+              <label class="sb-label">Currency</label>
+              <select class="sb-input" id="estimateCurrencySel">
+                <option value="$">$ USD</option>
+                <option value="€">€ EUR</option>
+                <option value="£">£ GBP</option>
+                <optgroup label="Other">
+                  <option value="¥">¥ JPY</option>
+                  <option value="C$">C$ CAD</option>
+                  <option value="A$">A$ AUD</option>
+                  <option value="CHF">CHF</option>
+                  <option value="₹">₹ INR</option>
+                  <option value="R$">R$ BRL</option>
+                  <option value="MX$">MX$ MXN</option>
+                  <option value="kr">kr SEK/NOK/DKK</option>
+                </optgroup>
+              </select>
+            </div>
+            <div id="estimateDynFields"></div>
+            <div id="estimateTotalDisplay" style="font-size:12px;font-weight:600;color:var(--ink);padding:6px 0 2px;border-top:1px solid var(--border);margin-top:4px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Generate URL -->
+      <div class="sb-sec">
         <button class="btn-outline" style="width:100%;margin-top:4px" id="genUrlBtn">Generate my URL ↗</button>
         <div id="urlArea" class="hidden" style="margin-top:10px">
           <div class="url-box" id="urlBox"></div>
@@ -989,6 +1075,12 @@
    v15 - fix selection contrast: anchor cells get full dark bg + white num, fill is lighter tint
    v16 - retain selection after 2nd click; popover: name only + char counter + validation;
          accent color auto-assigned; persistent success toast with X dismiss
+   v38 - fix toggle CSS missing; proper iOS-style pill toggle
+   v37 - estimate v2: toggle reveal, per-demo field profiles, accent-tinted bar,
+         currency preset select, medical blocked with note
+   v36 - fix buildDemo missing estimate (crash on demo load); ensureEstimate() guard
+   v35 - estimate panel: label dropdown, currency, labor+materials+total; bar below header;
+         persists in URL hash; prints with report
    v34 - print: page-break after timeline view; stacked/smaller month headers in print
    v33 - fix scroll-to-today firing on every render; only snap once on initial app load
    v32 - other-month cells blank+helpful toast; print: Timeline first, phase-months only
@@ -1034,10 +1126,58 @@ const PALETTE = [
   '#ff5c00','#305cde','#007BA7','#096c6c','#873260','#750851'
 ];
 
+
+// ─── ESTIMATE PROFILES ───────────────────────────
+const ESTIMATE_PROFILES = {
+  generic: {
+    defaultLabel: 'Estimate',
+    fields: [
+      { key:'line1', label:'Line Item 1' },
+      { key:'line2', label:'Line Item 2' },
+    ]
+  },
+  construction: {
+    defaultLabel: 'Quote',
+    fields: [
+      { key:'labor',    label:'Labor' },
+      { key:'materials',label:'Materials' },
+      { key:'permits',  label:'Permits & Fees' },
+    ]
+  },
+  film: {
+    defaultLabel: 'Project Budget',
+    fields: [
+      { key:'preprod', label:'Pre-Production' },
+      { key:'prod',    label:'Production' },
+      { key:'post',    label:'Post-Production' },
+    ]
+  },
+  events: {
+    defaultLabel: 'Estimate',
+    fields: [
+      { key:'venue',    label:'Venue' },
+      { key:'catering', label:'Catering' },
+      { key:'services', label:'Services & Staffing' },
+    ]
+  },
+  medical: {
+    blocked: true,
+    note: 'Cost varies by insurance and coverage. Consult your provider for a personalized breakdown.'
+  }
+};
+
+function defaultEstimate(type) {
+  const p = ESTIMATE_PROFILES[type] || ESTIMATE_PROFILES.generic;
+  if(p.blocked) return { enabled:false, type, label:'', currency:'$', fields:{}, blocked:true };
+  const fields = {};
+  p.fields.forEach(f => fields[f.key] = '');
+  return { enabled:false, type, label:p.defaultLabel, currency:'$', fields };
+}
+
 // ─── DEMO DATA ─────────────────────────────────────
 const DEMOS = [
   {
-    id:'ivf', cat:'Medical', label:'IVF Treatment',
+    id:'ivf', cat:'Medical', estimateType:'medical', label:'IVF Treatment',
     co:'Family Planning of NJ', tag:'Guiding Every Step of Your Journey',
     hex:'7f00ff',
     phases:[
@@ -1052,7 +1192,7 @@ const DEMOS = [
     ]
   },
   {
-    id:'construction', cat:'Construction', label:'Home Renovation',
+    id:'construction', cat:'Construction', estimateType:'construction', label:'Home Renovation',
     co:'Doyle Construction', tag:'Built Right. Built to Last.',
     hex:'EAA221',
     phases:[
@@ -1066,7 +1206,7 @@ const DEMOS = [
     ]
   },
   {
-    id:'film', cat:'Film', label:'Film Production',
+    id:'film', cat:'Film', estimateType:'film', label:'Film Production',
     co:'Margot Rita Films', tag:'Stories Worth Celebrating',
     hex:'873260',
     phases:[
@@ -1079,7 +1219,7 @@ const DEMOS = [
     ]
   },
   {
-    id:'wedding', cat:'Events', label:'Wedding Planning',
+    id:'wedding', cat:'Events', estimateType:'events', label:'Wedding Planning',
     co:'Timeless Events Co.', tag:'Every Detail. Every Moment.',
     hex:'096c6c',
     phases:[
@@ -1105,7 +1245,8 @@ let _initialScrollDone = false;
 let state = {
   co:'', tag:'', accent:'#111111',
   startDate: TODAY_S,
-  phases: []
+  phases: [],
+  estimate: defaultEstimate('generic')
 };
 let undos = [];
 let redos = [];
@@ -1224,7 +1365,12 @@ function loadURL() {
 
   if(hash) {
     const decoded = decodeState(hash);
-    if(decoded) { state = {...state,...decoded}; loaded = true; }
+    if(decoded) {
+      state = {...state,...decoded};
+      if(!state.estimate) state.estimate = defaultEstimate('generic');
+      else { if(!state.estimate.fields) state.estimate.fields={}; if(typeof state.estimate.enabled==='undefined') state.estimate.enabled=false; }
+      loaded = true;
+    }
   }
   // Branding params override
   if(params.get('co'))    state.co     = decodeURIComponent(params.get('co'));
@@ -1254,16 +1400,23 @@ function snap() {
   redos = [];
   syncUndoRedo();
 }
+function ensureEstimate() {
+  if(!state.estimate) state.estimate = defaultEstimate('generic');
+  if(!state.estimate.fields) state.estimate.fields = {};
+  if(typeof state.estimate.enabled === 'undefined') state.estimate.enabled = false;
+}
 function undo() {
   if(!undos.length) return;
   redos.push(JSON.stringify(state));
   state = JSON.parse(undos.pop());
+  ensureEstimate();
   syncUndoRedo(); syncSidebar(); applyAccent(); render();
 }
 function redo() {
   if(!redos.length) return;
   undos.push(JSON.stringify(state));
   state = JSON.parse(redos.pop());
+  ensureEstimate();
   syncUndoRedo(); syncSidebar(); applyAccent(); render();
 }
 function syncUndoRedo() {
@@ -1284,7 +1437,7 @@ function buildDemo(demo) {
     phases.push({ id:uid(), name:p.name, startDate:cur, endDate:end, color:pal[i] });
     cur = addDays(end, 1);
   });
-  return { co:demo.co, tag:demo.tag, accent:'#'+demo.hex, startDate:TODAY_S, phases };
+  return { co:demo.co, tag:demo.tag, accent:'#'+demo.hex, startDate:TODAY_S, phases, estimate:defaultEstimate(demo.estimateType||'generic') };
 }
 
 // ═══════════════════════════════════════════════════
@@ -1345,6 +1498,7 @@ function showApp() {
   document.getElementById('landing').classList.add('hidden');
   document.getElementById('app').classList.remove('hidden');
   _initialScrollDone = false;
+  ensureEstimate();
   syncSidebar(); applyAccent(); render();
 }
 
@@ -1468,6 +1622,157 @@ window.addEventListener('resize', ()=>{
   _resizeTimer = setTimeout(()=>{ if(currentView==='month') renderPhaseOverlays(); }, 150);
 });
 
+
+// ═══════════════════════════════════════════════════
+// ESTIMATE
+// ═══════════════════════════════════════════════════
+
+function fmtMoney(val, currency) {
+  const s = (val||'').toString().replace(/[^0-9.]/g,'');
+  const n = parseFloat(s);
+  if(isNaN(n) || n === 0) return '';
+  return (currency||'$') + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+
+function estimateTotal() {
+  const e = state.estimate;
+  if(!e || !e.fields) return 0;
+  return Object.values(e.fields).reduce((sum, v) => {
+    return sum + (parseFloat((v||'').toString().replace(/[^0-9.]/g,'')) || 0);
+  }, 0);
+}
+
+function accentTint(hex, opacity) {
+  // Return hex color at given opacity over white background
+  try {
+    const [r,g,b] = hex2rgb(hex);
+    const [h,s,l] = rgb2hsl(r,g,b);
+    const tintL = Math.min(l + 42, 95);
+    const tintS = Math.max(s * 0.5, 8);
+    const [tr,tg,tb] = hsl2rgb(h, tintS, tintL);
+    return rgb2hex(tr,tg,tb);
+  } catch(e) { return '#E4F3EE'; }
+}
+
+function renderEstimateBar() {
+  const e = state.estimate;
+  const bar = document.getElementById('estimateBar');
+  if(!e || !e.enabled || e.blocked) { bar.classList.add('hidden'); return; }
+
+  const total = estimateTotal();
+  const hasAny = total > 0 || Object.values(e.fields||{}).some(v=>v);
+  if(!hasAny) { bar.classList.add('hidden'); return; }
+
+  bar.classList.remove('hidden');
+  // Accent-tinted background
+  const bg = accentTint(state.accent||'#111111', 0.12);
+  bar.style.background = bg;
+  bar.style.borderBottomColor = 'var(--border)';
+
+  const cur = e.currency || '$';
+  const totalFmt = fmtMoney(total, cur);
+  const profile = ESTIMATE_PROFILES[e.type||'generic'] || ESTIMATE_PROFILES.generic;
+
+  document.getElementById('estimateBarLabel').textContent = e.label || profile.defaultLabel || 'Estimate';
+
+  // Build field chips
+  const laborEl = document.getElementById('estimateBarLabor');
+  const matsEl  = document.getElementById('estimateBarMats');
+  const totalEl = document.getElementById('estimateBarTotal');
+
+  // Repurpose labor/mats spans for first two fields
+  const fields = profile.fields || [];
+  const vals = e.fields || {};
+
+  if(fields[0]) {
+    const amt = fmtMoney(vals[fields[0].key]||'', cur);
+    if(amt) { laborEl.classList.remove('hidden'); document.getElementById('estimateBarLaborAmt').textContent = amt; laborEl.querySelector ? null : null;
+      laborEl.innerHTML = `${fields[0].label}: <strong>${amt}</strong>`; }
+    else laborEl.classList.add('hidden');
+  } else laborEl.classList.add('hidden');
+
+  if(fields[1]) {
+    const amt = fmtMoney(vals[fields[1].key]||'', cur);
+    if(amt) { matsEl.classList.remove('hidden');
+      matsEl.innerHTML = `${fields[1].label}: <strong>${amt}</strong>`; }
+    else matsEl.classList.add('hidden');
+  } else matsEl.classList.add('hidden');
+
+  if(total > 0) { totalEl.classList.remove('hidden'); totalEl.textContent = `Total: ${totalFmt}`; }
+  else totalEl.classList.add('hidden');
+
+  // Sidebar total
+  const disp = document.getElementById('estimateTotalDisplay');
+  if(disp) disp.textContent = total > 0 ? `Total: ${totalFmt}` : '';
+}
+
+function renderEstimateSidebarFields() {
+  const e = state.estimate;
+  const container = document.getElementById('estimateDynFields');
+  const blockedMsg = document.getElementById('estimateBlockedMsg');
+  const fieldsWrap = document.getElementById('estimateFields');
+  if(!container) return;
+
+  const profile = ESTIMATE_PROFILES[e.type||'generic'] || ESTIMATE_PROFILES.generic;
+
+  if(profile.blocked) {
+    if(blockedMsg) { blockedMsg.style.display='block'; blockedMsg.textContent = profile.note; }
+    if(fieldsWrap) {
+      // Hide all inputs except blocked msg
+      Array.from(fieldsWrap.children).forEach(c => {
+        if(c.id !== 'estimateBlockedMsg') c.style.display = 'none';
+      });
+      blockedMsg.style.display = 'block';
+    }
+    container.innerHTML = '';
+    return;
+  }
+
+  if(blockedMsg) blockedMsg.style.display = 'none';
+  if(fieldsWrap) Array.from(fieldsWrap.children).forEach(c => c.style.display = '');
+
+  const cur = e.currency || '$';
+  container.innerHTML = (profile.fields||[]).map(f => {
+    const val = (e.fields||{})[f.key] || '';
+    return `<div class="sb-field">
+      <label class="sb-label">${f.label}</label>
+      <input type="text" class="sb-input est-field-input" data-key="${f.key}"
+        placeholder="0.00" inputmode="decimal" value="${val}">
+    </div>`;
+  }).join('');
+
+  // Wire dynamic field inputs
+  container.querySelectorAll('.est-field-input').forEach(inp => {
+    inp.addEventListener('input', ev => {
+      if(!state.estimate.fields) state.estimate.fields = {};
+      state.estimate.fields[ev.target.dataset.key] = ev.target.value;
+      renderEstimateBar();
+      const total = estimateTotal();
+      const cur = state.estimate.currency || '$';
+      const disp = document.getElementById('estimateTotalDisplay');
+      if(disp) disp.textContent = total > 0 ? `Total: ${fmtMoney(total, cur)}` : '';
+    });
+  });
+}
+
+function syncEstimateSidebar() {
+  const e = state.estimate;
+  const toggle = document.getElementById('estimateToggle');
+  const panel  = document.getElementById('estimatePanel');
+  const sel    = document.getElementById('estimateLabelSel');
+  const curSel = document.getElementById('estimateCurrencySel');
+
+  if(toggle) toggle.checked = !!e.enabled;
+  if(panel)  panel.style.display = e.enabled ? 'block' : 'none';
+  if(sel && e.label) sel.value = e.label;
+  if(curSel && e.currency) {
+    // Try to match existing option, else select $
+    const opt = Array.from(curSel.options).find(o => o.value === e.currency);
+    curSel.value = opt ? e.currency : '$';
+  }
+  renderEstimateSidebarFields();
+}
+
 // ═══════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════
@@ -1477,6 +1782,7 @@ function render() {
   if(currentView==='month') renderMonthView();
   else renderGanttView();
   renderHeader();
+  renderEstimateBar();
   syncUndoRedo();
 }
 
@@ -1780,6 +2086,7 @@ function syncSidebar() {
   document.getElementById('tagInput').value   = state.tag||'';
   document.getElementById('accentInput').value = state.accent||'#111111';
   document.getElementById('startDateInput').value = state.startDate||TODAY_S;
+  syncEstimateSidebar();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1929,7 +2236,7 @@ function dismissSuccessToast() {
 function wire() {
   // Landing
   document.getElementById('scratchBtn').addEventListener('click',()=>{
-    state={co:'',tag:'',accent:'#111111',startDate:TODAY_S,phases:[]};
+    state={co:'',tag:'',accent:'#111111',startDate:TODAY_S,phases:[],estimate:defaultEstimate('generic')};
     undos=[]; redos=[];
     showApp();
   });
@@ -2051,6 +2358,20 @@ function wire() {
   });
   // Today button
   document.getElementById('calToday').addEventListener('click',()=>scrollToToday(true));
+
+  // Estimate toggle
+  document.getElementById('estimateToggle').addEventListener('change', e=>{
+    state.estimate.enabled = e.target.checked;
+    document.getElementById('estimatePanel').style.display = e.target.checked ? 'block' : 'none';
+    if(e.target.checked) renderEstimateSidebarFields();
+    renderEstimateBar();
+  });
+  document.getElementById('estimateLabelSel').addEventListener('change', e=>{
+    state.estimate.label = e.target.value; renderEstimateBar();
+  });
+  document.getElementById('estimateCurrencySel').addEventListener('change', e=>{
+    state.estimate.currency = e.target.value; renderEstimateSidebarFields(); renderEstimateBar();
+  });
 
   document.getElementById('successToastX').addEventListener('click', dismissSuccessToast);
   document.getElementById('copyUrlBtn').addEventListener('click',()=>{
