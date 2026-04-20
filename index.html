@@ -1710,7 +1710,7 @@
         <span class="lfooter-dot">·</span>
         <span>d<span class="zero">00</span>r is in beta — feedback welcome</span>
       </div>
-      <div class="lfooter-row lfooter-ver">v82</div>
+      <div class="lfooter-row lfooter-ver">v89</div>
     </div>
   </footer>
 </div>
@@ -1856,7 +1856,7 @@
           <button class="btn-solid" style="width:100%" id="copyUrlBtn">Copy URL</button>
         </div>
       </div>
-      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v82</div>
+      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v89</div>
     </aside>
 
     <!-- MAIN -->
@@ -1907,6 +1907,10 @@
 
 <script>
 /* CHANGELOG:
+   v89 - bumped both user-visible version badges (landing footer + sidebar label)
+         from v82 → v89. Caught by Ron: I'd been updating the CHANGELOG comment
+         on every release from v83–v88 but not touching the actual UI strings.
+         Going forward, version bump = CHANGELOG + both badges.
    v88 - calendar density now per-week, not global. v86's global flag meant a single
          4-overlap day anywhere in the plan compressed every month, including weeks
          with only 2 or 3 phases visible. Rewrote to compute density per Sun–Sat
