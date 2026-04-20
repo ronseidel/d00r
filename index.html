@@ -285,7 +285,7 @@
     }
     .demos-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 18px;
     }
     @media (max-width: 860px) { .demos-grid { grid-template-columns: repeat(2,1fr); } }
@@ -896,9 +896,15 @@
 
     /* ─── PRINT ──────────────────────────────────────────── */
     @media print {
+      html, body {
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
       body > *:not(#printReport) { display: none !important; }
       #printReport {
         display: block !important;
+        background: #ffffff !important;
         font-family: 'DM Sans', system-ui, sans-serif;
         font-size: 11px;
         color: #111;
@@ -1520,10 +1526,10 @@
         <p>Export a PDF or share a link with your clients or team</p>
       </div>
       <div class="hero-col">
-        <div class="hero-col-label">No Tracking</div>
-        <p>No account needed and we don't save your data
-          <span class="info-icon" tabindex="0" aria-label="Your data is stored in the URL you create. We don't save anything to a database.">&#9432;
-            <span class="info-tooltip">The data you provide is only stored in the link/URL you create. We don't save your information in a database.</span>
+        <div class="hero-col-label">Private</div>
+        <p>Your data lives in the link and this browser. No database. No tracking.
+          <span class="info-icon" tabindex="0" aria-label="How your data is stored">&#9432;
+            <span class="info-tooltip">d00r saves your work to your browser as you edit. To share it, keep it, or open it elsewhere, use Copy Link — that link contains your full plan. Clearing your browser data will erase any unsaved work.</span>
           </span>
         </p>
       </div>
@@ -1535,7 +1541,7 @@
     <div class="demos-grid" id="demosGrid"></div>
     <div class="demos-label" style="margin-top:36px">Templates — start from a real process</div>
     <div class="demos-grid" id="templatesGrid"></div>
-    <div style="margin-top:48px;padding-bottom:24px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;text-align:center;">v59</div>
+    <div style="margin-top:48px;padding-bottom:24px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;text-align:center;">v63</div>
   </section>
 </div>
 
@@ -1680,7 +1686,7 @@
           <button class="btn-solid" style="width:100%" id="copyUrlBtn">Copy URL</button>
         </div>
       </div>
-      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v59</div>
+      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v63</div>
     </aside>
 
     <!-- MAIN -->
@@ -1731,6 +1737,20 @@
 
 <script>
 /* CHANGELOG:
+   v63 - truthfulness pass: "No Tracking" label + copy was misleading (we DO save to localStorage).
+         Rewrote to "Private / Your data lives in the link and this browser. No database. No tracking."
+         Tooltip explains the browser-save mental model and Copy Link as the "save" action.
+         Start from scratch now confirms before overwriting autosaved work (only when state is meaningful).
+         Resume banner is dismissed when user starts fresh.
+   v62 - demos are now 3 cards (Construction, Film, Wedding) — all client-facing service businesses
+         for tighter positioning; IVF moved into templates, placed immediately before Family Planning
+         so medical-journey templates cluster together; demos grid 4col → 3col;
+         ?start=health and ?start=ivf now fall through from DEMOS to TEMPLATES
+   v61 - print: force pure white #fff bg on html/body/#printReport with !important +
+         print-color-adjust:exact so browsers don't strip it. Off-white --bg-subtle was bleeding through.
+   v60 - demo reorder: Construction → Film → Wedding → IVF (was IVF first);
+         reasons: construction is universally legible, shows full estimate with 3 fields,
+         IVF is emotionally loaded and is the one demo with blocked estimate (poor first impression)
    v59 - brand assets + beta release: favicon.svg + favicon-32.png + apple-touch-icon (180) +
          icon-192/512 for PWA; manifest.json with theme-color; og:image + twitter:image (1200x630)
          with proper alt/width/height; og:description updates dynamically with plan info;
@@ -1919,21 +1939,6 @@ function defaultEstimate(type) {
 // ─── DEMO DATA ─────────────────────────────────────
 const DEMOS = [
   {
-    id:'ivf', cat:'Medical', estimateType:'medical', label:'IVF Treatment',
-    co:'Family Planning of NJ', tag:'Guiding Every Step of Your Journey',
-    hex:'7f00ff',
-    phases:[
-      {name:'Baseline Labs',   days:5},
-      {name:'Suppression',     days:14},
-      {name:'Stimulation',     days:10},
-      {name:'Trigger Shot',    days:2},
-      {name:'Egg Retrieval',   days:2},
-      {name:'Transfer Prep',   days:7},
-      {name:'Embryo Transfer', days:2},
-      {name:'Two Week Wait',   days:14},
-    ]
-  },
-  {
     id:'construction', cat:'Construction', estimateType:'construction', label:'Home Renovation',
     co:'Doyle Construction', tag:'Built Right. Built to Last.',
     hex:'EAA221',
@@ -2057,6 +2062,20 @@ const TEMPLATES = [
       {name:'Tech Week',          days:7},
       {name:'Previews',           days:7},
       {name:'Opening Night',      days:1},
+    ]
+  },
+  {
+    id:'ivf', cat:'Medical', estimateType:'medical', label:'IVF Treatment',
+    co:'', tag:'', hex:'7f00ff',
+    phases:[
+      {name:'Baseline Labs',   days:5},
+      {name:'Suppression',     days:14},
+      {name:'Stimulation',     days:10},
+      {name:'Trigger Shot',    days:2},
+      {name:'Egg Retrieval',   days:2},
+      {name:'Transfer Prep',   days:7},
+      {name:'Embryo Transfer', days:2},
+      {name:'Two Week Wait',   days:14},
     ]
   },
   {
@@ -2222,7 +2241,17 @@ function loadURL() {
     const demoMap = { health:'ivf', construction:'construction', film:'film', event:'wedding', events:'wedding', band:'film', project:'construction' };
     const demoId = demoMap[startParam.toLowerCase()] || startParam;
     const demo = DEMOS.find(d=>d.id===demoId);
-    if(demo) { state = buildDemo(demo); loaded = true; }
+    if(demo) {
+      state = buildDemo(demo);
+      loaded = true;
+    } else {
+      // Fall through to templates (e.g. ?start=ivf or ?start=health now lives in templates)
+      const tmpl = TEMPLATES.find(t=>t.id===demoId);
+      if(tmpl && tmpl.phases) {
+        state = buildTemplate(tmpl, tmpl.phases, true);
+        loaded = true;
+      }
+    }
   }
 
   return loaded || !!params.get('co') || !!startParam;
@@ -3894,9 +3923,32 @@ function dismissSuccessToast() {
 function wire() {
   // Landing
   document.getElementById('scratchBtn').addEventListener('click',()=>{
-    state={co:'',tag:'',planName:'',accent:'#111111',startDate:TODAY_S,phases:[],estimate:defaultEstimate('generic')};
-    undos=[]; redos=[];
-    showApp();
+    const doScratch = () => {
+      state={co:'',tag:'',planName:'',accent:'#111111',startDate:TODAY_S,phases:[],estimate:defaultEstimate('generic')};
+      undos=[]; redos=[];
+      clearAutosaved();
+      _lastSyncedHash = stateHash(state);
+      document.body.classList.remove('is-dirty');
+      const rb = document.getElementById('resumeBanner');
+      if(rb) rb.classList.remove('visible');
+      showApp();
+    };
+    // If there's meaningful autosaved work, warn before overwriting it
+    const saved = loadAutosaved();
+    if(saved && saved.state && hasMeaningfulState(saved.state)) {
+      const co = saved.state.co || 'your saved plan';
+      const n = (saved.state.phases||[]).length;
+      showConfirm(
+        'Start fresh?',
+        `This will replace "${co}" (${n} phase${n===1?'':'s'}) saved in this browser. Make sure you've copied the link if you want to keep it.`,
+        doScratch
+      );
+      // Override button label + color for this specific case
+      const ok = document.getElementById('confirmOk');
+      if(ok) { ok.textContent = 'Start fresh'; }
+    } else {
+      doScratch();
+    }
   });
   document.getElementById('backBtn').addEventListener('click',e=>{
     e.preventDefault(); showLanding();
