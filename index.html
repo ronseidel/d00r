@@ -791,7 +791,30 @@
       justify-content: center;
     }
     /* phase bars rendered as overlays via renderPhaseOverlays() */
-    .phase-overlay-bar { box-sizing: border-box; }
+    .phase-overlay-bar {
+      box-sizing: border-box;
+      transition: height .14s ease, box-shadow .14s ease;
+    }
+    /* Dense mode: activated when 4+ phases overlap on any day.
+       Bars shrink, labels hide, status dots miniaturize.
+       Hover restores full size + label with z-index lift. */
+    .phase-overlay-bar.dense .bar-label { display: none; }
+    .phase-overlay-bar.dense .status-dot {
+      width: 5px; height: 5px;
+      margin-right: 4px;
+      border-width: 0.5px;
+    }
+    .phase-overlay-bar.dense:hover {
+      height: 22px !important;
+      z-index: 50 !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+    }
+    .phase-overlay-bar.dense:hover .bar-label { display: inline; }
+    .phase-overlay-bar.dense:hover .status-dot {
+      width: 7px; height: 7px;
+      margin-right: 6px;
+      border-width: 1px;
+    }
 
     /* Empty state */
     .empty-state {
@@ -1169,6 +1192,81 @@
     }
     .drawer-swatch:hover { transform: scale(1.12); }
     .drawer-swatch.on { border-color: var(--ink); }
+
+    /* ─── STATUS CHIPS (drawer) ─────────────────────── */
+    .drawer-status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+      margin-top: 4px;
+    }
+    .drawer-status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1.5px solid var(--border);
+      background: var(--bg);
+      color: var(--ink-2);
+      transition: border-color .12s, background .12s, color .12s;
+      user-select: none;
+      font-family: var(--font-b);
+    }
+    .drawer-status-chip:hover { border-color: var(--border-2); }
+    .drawer-status-chip .symbol { font-size: 12px; line-height: 1; }
+    .drawer-status-chip[data-status="planned"].on  { background:#f3f4f6; color:#6b7280; border-color:#6b7280; }
+    .drawer-status-chip[data-status="progress"].on { background:#dbeafe; color:#2563eb; border-color:#2563eb; }
+    .drawer-status-chip[data-status="risk"].on     { background:#fef3c7; color:#d97706; border-color:#d97706; }
+    .drawer-status-chip[data-status="done"].on     { background:#dcfce7; color:#16a34a; border-color:#16a34a; }
+    .drawer-status-clear {
+      font-size: 11px;
+      color: var(--ink-3);
+      padding: 5px 8px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-radius: 4px;
+      background: none;
+      font-family: var(--font-b);
+      margin-left: 2px;
+    }
+    .drawer-status-clear:hover { color: var(--ink-2); border-color: var(--border); }
+
+    /* ─── STATUS PILLS (list view, print) ─────────────── */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .2px;
+      white-space: nowrap;
+      line-height: 1.5;
+    }
+    .status-pill .symbol { font-size: 10px; line-height: 1; }
+    .status-pill[data-status="planned"]  { background:#f3f4f6; color:#6b7280; }
+    .status-pill[data-status="progress"] { background:#dbeafe; color:#2563eb; }
+    .status-pill[data-status="risk"]     { background:#fef3c7; color:#d97706; }
+    .status-pill[data-status="done"]     { background:#dcfce7; color:#16a34a; }
+
+    /* ─── STATUS DOT (timeline bar + calendar overlay) ─ */
+    .status-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      margin-right: 6px;
+      vertical-align: middle;
+      flex-shrink: 0;
+      border: 1px solid rgba(255,255,255,0.6);
+      box-sizing: border-box;
+    }
     .drawer-footer {
       padding: 16px 20px;
       border-top: 1px solid var(--border);
@@ -1403,22 +1501,6 @@
     .door-wrap:hover .demo-card::after { opacity: 1; }
 
     .tog-txt { display: none; }
-    .view-tog button { position: relative; }
-    .view-tog button[title]:hover::after {
-      content: attr(title);
-      position: absolute;
-      top: calc(100% + 6px);
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--ink);
-      color: #fff;
-      font-size: 11px;
-      white-space: nowrap;
-      padding: 3px 7px;
-      border-radius: 4px;
-      pointer-events: none;
-      z-index: 100;
-    }
 
     .hdr-brand { position: relative; display: flex; flex-direction: row; align-items: center; gap: 6px; }
     .hdr-brand-text { display: flex; flex-direction: column; }
@@ -1588,7 +1670,7 @@
   </nav>
 
   <section class="hero">
-    <div class="hero-eyebrow">Visual Process Planning</div>
+    <div class="hero-eyebrow">Visual plans, schedules, & roadmaps</div>
     <h1>Your Plan.<br><em>Shared.</em></h1>
     <div class="hero-cols">
       <div class="hero-col">
@@ -1628,7 +1710,7 @@
         <span class="lfooter-dot">·</span>
         <span>d<span class="zero">00</span>r is in beta — feedback welcome</span>
       </div>
-      <div class="lfooter-row lfooter-ver">v68</div>
+      <div class="lfooter-row lfooter-ver">v82</div>
     </div>
   </footer>
 </div>
@@ -1653,14 +1735,14 @@
     </div>
     <div class="hdr-spacer"></div>
     <div class="view-tog" id="viewTog">
-      <button id="btnMonth" class="active" title="Calendar (C)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="3" width="13" height="11" rx="1.5"/><line x1="1.5" y1="6.5" x2="14.5" y2="6.5"/><line x1="5.5" y1="1.5" x2="5.5" y2="4" stroke-linecap="round"/><line x1="10.5" y1="1.5" x2="10.5" y2="4" stroke-linecap="round"/></svg></button>
-      <button id="btnGantt" title="Timeline (T)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="2" y1="4" x2="10" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="7" y2="12"/></svg></button>
-      <button id="btnList" title="List (L)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="6" y1="4" x2="14" y2="4"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="6" y1="12" x2="14" y2="12"/><circle cx="2.5" cy="4" r="1" fill="currentColor" stroke="none"/><circle cx="2.5" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="2.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg></button>
+      <button id="btnMonth" class="active"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="3" width="13" height="11" rx="1.5"/><line x1="1.5" y1="6.5" x2="14.5" y2="6.5"/><line x1="5.5" y1="1.5" x2="5.5" y2="4" stroke-linecap="round"/><line x1="10.5" y1="1.5" x2="10.5" y2="4" stroke-linecap="round"/></svg></button>
+      <button id="btnGantt"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="2" y1="4" x2="10" y2="4"/><line x1="2" y1="8" x2="14" y2="8"/><line x1="2" y1="12" x2="7" y2="12"/></svg></button>
+      <button id="btnList"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"><line x1="6" y1="4" x2="14" y2="4"/><line x1="6" y1="8" x2="14" y2="8"/><line x1="6" y1="12" x2="14" y2="12"/><circle cx="2.5" cy="4" r="1" fill="currentColor" stroke="none"/><circle cx="2.5" cy="8" r="1" fill="currentColor" stroke="none"/><circle cx="2.5" cy="12" r="1" fill="currentColor" stroke="none"/></svg></button>
     </div>
     <div class="hdr-div hdr-div-actions"></div>
     <div class="hdr-actions">
-      <button class="ico-btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled>↩</button>
-      <button class="ico-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>↪</button>
+      <button class="ico-btn" id="undoBtn" title="Undo (Ctrl+Z)" disabled><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h6a3 3 0 0 1 0 6H6"/><polyline points="6 5 3 8 6 11"/></svg></button>
+      <button class="ico-btn" id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8H6a3 3 0 0 0 0 6h4"/><polyline points="10 5 13 8 10 11"/></svg></button>
       <button class="btn-outline" id="copyLinkBtn">
         <span class="copy-link-dot" id="copyLinkDot" title="Unsaved changes"></span>Copy Link
       </button>
@@ -1774,13 +1856,13 @@
           <button class="btn-solid" style="width:100%" id="copyUrlBtn">Copy URL</button>
         </div>
       </div>
-      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v68</div>
+      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v82</div>
     </aside>
 
     <!-- MAIN -->
     <main id="mainArea">
       <div id="calNav" style="padding:0 0 16px 0;">
-        <button class="btn-outline" id="calToday" style="font-size:12px;padding:5px 12px;">↩ Today</button>
+        <button class="btn-outline" id="calToday" style="font-size:12px;padding:5px 12px;display:inline-flex;align-items:center;gap:6px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h6a3 3 0 0 1 0 6H6"/><polyline points="6 5 3 8 6 11"/></svg>Today</button>
       </div>
       <div id="monthView"></div>
       <div id="ganttView" class="hidden"></div>
@@ -1825,6 +1907,221 @@
 
 <script>
 /* CHANGELOG:
+   v88 - calendar density now per-week, not global. v86's global flag meant a single
+         4-overlap day anywhere in the plan compressed every month, including weeks
+         with only 2 or 3 phases visible. Rewrote to compute density per Sun–Sat
+         row: each week-row sizes its own bars based on its own max concurrent.
+         Quiet weeks stay at 18px, crowded weeks drop to 8px. Matches how Outlook
+         and Google Calendar handle it. Phases spanning multiple weeks will visibly
+         change height at week boundaries — that's the point, it reads as "this
+         week is tight, this one isn't." Threshold back to 4+ (3-overlap weeks
+         stay full height — 3 × 18 + 2 × 3 = 60px which leaves room for dates).
+         Replaced getMaxConcurrentPhases() with buildPerDayCount() + sundayOf() +
+         a memoized maxInWeek() lookup inside renderPhaseOverlays. Hover expansion
+         and status dot behavior unchanged.
+   v87 - lowered dense calendar threshold from 4+ to 3+ concurrent phases. Initial
+         threshold was conservative; in practice 3 stacked full-height bars on a single
+         week-row already feels crowded (user spotted this in April view of Roadmap,
+         where API Rate Limiting hadn't started yet so only 3 were visible — but max
+         elsewhere in the plan was 4, activating dense globally). Lowering the trigger
+         matches stated behavior to visible behavior. Density remains global to the
+         plan (not per-week) to avoid jarring height shifts when scrolling months.
+   v86 - dense calendar mode. When 4+ phases overlap on any single day, calendar bars
+         shrink (18px → 8px, gap 3px → 2px) and labels hide, so a Team Roadmap with 5
+         concurrent initiatives no longer swallows the date numbers. Status dots stay
+         visible at 5px (color reads without symbol). Hover expands the bar back to
+         22px with label + 7px status dot, z-index 50 lifts it above neighbors, soft
+         shadow adds depth. Click still opens the drawer. Browser tooltip (title attr)
+         handles touch devices where hover doesn't apply.
+         Implementation: getMaxConcurrentPhases() sweeps the plan once to find max
+         daily overlap. BAR_H/GAP hoisted out of the segment loop and computed from
+         the DENSE flag. Bars get an extra `.dense` class for CSS targeting. Label
+         span is always in the DOM now (was conditional) — CSS controls visibility.
+         Threshold ≥4 chosen conservatively; easy to dial to ≥3 if testing shows
+         3-phase overlaps also feel crowded. Does not affect gantt/list/print views.
+   v85 - status dots in calendar view. The gantt/list/print surfaces had status chrome but
+         calendar was bare, which missed the densest-viewed surface. Added a status dot to
+         the phase overlay bar, prepended before the name label (same left-of-label pattern
+         as timeline for consistency). Reuses the existing .status-dot class — un-scoped
+         from `.gantt-bar .status-dot` so it applies in both contexts. Dot renders only when
+         the label renders (shares the width > 44px gate), so narrow week-row segments stay
+         clean. On multi-week phases, the dot appears on every row that shows the name,
+         giving a persistent status read as you scroll through months.
+   v84 - phase status primitive. 4 states — Planned (○ gray), In Progress (◐ blue),
+         At Risk (⚠ amber), Done (● green). Auto-detected: if any phase has a status
+         set, status chrome (column, dots, pills) appears across list view, print,
+         and timeline. If none do, chrome stays hidden — Wedding/Travel etc. stay clean.
+         New primitives:
+         - STATUSES constant (key → {label, symbol, color, bg})
+         - statusPill(status) helper for list + print
+         - hasAnyStatus(phases) gate for auto-detect
+         - applyOptional now propagates p.status from template data
+         Surfaces:
+         - Drawer: 4 chips + Clear button, always visible as its own field between
+           Dates and Color. Click active chip again to unset. Live-renders on change.
+         - Timeline bar: 7px dot before label, colored per status, inside the bar.
+         - List view: Status column (between Phase and Start), pill with symbol + label.
+         - Print report: Status column, same pill. Symbol carries meaning in B&W.
+         Template pre-populate:
+         - Team Roadmap: Onboarding=progress, Search=progress, Mobile Nav=risk,
+           Analytics=planned, API Rate Limiting=planned. Communicates "we're in flight,
+           one thing is slipping" in a glance.
+         - Agency Project: Discovery=done, Design=done, Engineering=progress, then
+           QA/Beta/Launch/Review=planned. Shows a mid-project snapshot.
+         Design decision: left "Done" on phases with future end dates in Agency template
+         (shown as sample, users replace dates anyway). If this reads buggy in testing,
+         drop status:'done' from Agency template — all other statuses stay intact.
+         Deferred (not in this pass): calendar corner dot, click-to-cycle in list view,
+         sidebar phase list status dot.
+   v83 - positioning pass: d00r is for plans you have to *show*, not work you have to *do*.
+         Three changes to make that positioning visible on the landing:
+         (1) Hero eyebrow: "Visual Process Planning" → "Visual plans, schedules, & roadmaps".
+             Old line leaned PM-tool ("process"); new line names the three primary use-case
+             shapes and seeds Team Roadmap as a category rather than burying it.
+         (2) Template rename: "Software Project" → "Agency Project". Phase shape (Discovery →
+             Design → Engineering → QA → Beta → Launch → Post-Launch Review) was already an
+             agency waterfall — the label just now matches. ID stays 'software' so any
+             ?start=software URLs still resolve.
+         (3) Template reorder: Team Roadmap → Sports Season → Agency Project (was Agency →
+             Sports → Roadmap). Roadmap is the biggest "show the plan" use case so it leads.
+             Sports stays #2 as the flagship showcase. Agency slides to #3.
+         New template order: Roadmap → Sports → Agency → Product Launch → Painting → Album
+         → 5K → SAT → Stage Play → IVF → Family Planning. Grid stays 3+3+3+2.
+         Out of scope this pass (kept verbatim): h1 tagline, demos, footer, meta tags,
+         category labels. Next: phase/item status primitive (Planned / In Progress / At Risk
+         / Done).
+   v82 - promoted Sports Season to template position #2 (right after Software Project, before
+         Team Roadmap). It's the richest template in the library — overlapping phases, location
+         with map links, notes, per-phase color coding, real-world NBA arenas — so it serves as
+         the flagship "look what this can do" showcase. Also has the broadest audience and
+         best viral surface (coach → 20+ parents per share).
+         New template order: Software → Sports → Roadmap → Product Launch → Painting → Album
+         → 5K → SAT → Stage Play → IVF → Family Planning. Grid stays 3+3+3+2.
+   v81 - Sports Season chapters: the auto-generated palette was producing burgundy/maroon at
+         the dark end (Preseason), reading as "auburn" not "red". Fixed by giving each of the
+         6 chapters explicit vibrant colors from the Tailwind red/rose scale:
+           Preseason:      #dc2626 (red-600)
+           Early Season:   #e11d48 (rose-600)
+           Mid-Season:     #ef4444 (red-500)
+           Rivalry Week:   #f43f5e (rose-500, most vibrant — matches the "rivalry" intensity)
+           Playoffs:       #f87171 (red-400)
+           Banquet & Wrap: #fb7185 (rose-400, celebratory lighter tone)
+         Game markers still use amber #f59e0b for high contrast against the red chapters.
+         Card preview also reflects these explicit colors (makeCard respects p.color since v80).
+   v80 - Sports Season card preview fix: Sports had 14 phases (6 chapters + 8 game markers),
+         which rendered as 14 thin bars in the landing card — visually inconsistent with other
+         6-phase templates. Capped makeCard() preview at 7 phases (first N in array). For
+         Sports this shows chapters only, matching the visual rhythm of every other card.
+         Also made makeCard() respect per-phase color overrides (via p.color) so future
+         templates with distinct phase types render accurately in previews.
+         Also: switched Sports base hex from #dc2626 to brighter #ef4444. The darker red was
+         producing auburn/burgundy tones at the dark end of genPalette's L=20% gradient.
+         The brighter base reads as genuine red across the full palette range.
+   v79 - Sports Season color refresh: the amber #d97706 base lacked contrast and felt drab.
+         Switched base to punchy red #dc2626 (classic team color; also genuinely missing from
+         the template palette). Game markers now use brighter amber #f59e0b (was #d97706 — the
+         old base color) so they pop against the red-palette chapters like floodlights on the
+         court. Hierarchy is clearer: red chapter blocks, amber game markers.
+   v78 - Sports Season template — real value demonstration:
+         (1) Season Schedule variant now mixes macro chapters (Preseason, Early, Mid, Rivalry,
+             Playoffs, Banquet) with 8 single-day game markers sprinkled across the schedule.
+             All games use the amber accent color for a distinct "game" visual read against the
+             palette-colored chapters. Home venue: Madison Square Garden; away games at real NBA
+             arenas (TD Garden, United Center, American Airlines Center, etc.). Game titles
+             include start time ("vs Lakers — 7:00 PM"); each has a location and most have notes.
+         (2) Added Open in Maps functionality:
+             - Drawer: "Open in Maps ↗" link appears next to Location label when field has
+               content, live-updates as user types, hides when empty.
+             - Print report: Location cells now rendered as clickable links to Google Maps
+               search (fmtLocationCell helper). Parents/clients tap to get directions.
+             - mapsURL() helper builds the search URL: google.com/maps/search/?api=1&query=...
+         (3) buildTemplate() now propagates per-phase color overrides + location from template
+             data (applyOptional helper). Enables templates to declaratively set special
+             colors for distinct phase types.
+         Also demonstrates three other d00r features at once: overlapping phases (games within
+         chapters), notes, and location — which most existing templates barely touch.
+   v77 - two updates:
+         (1) Team Roadmap: reworked phase offsets so THREE initiatives run from day 0
+             (Onboarding, Search, Mobile Nav — 42/63/35 days) with Analytics and API Rate
+             Limiting staggered in at weeks 3 and 6. Previously only one started at day 0
+             and the rest trailed in, which buried the concurrent-stream value prop.
+         (2) Added Sports Season template (cat:Sports, amber #d97706) with two variants via
+             prefillPrompt: "Season Schedule or Preseason Training?"
+             - Season: Preseason → Early Season → Mid-Season → Rivalry Week → Playoffs →
+               Banquet. Block-based; d00r's phase model fits chapters-of-season better than
+               individual game dates.
+             - Preseason Training ("Doubles"): Fitness Prep → Doubles Wk1 → Doubles Wk2 →
+               Scrimmage Week → Final Cuts → Opening Day. Based on real high-school soccer
+               two-a-day pattern.
+             Slotted between 5K Training and SAT Prep. Grid is now 3+3+3+2 on desktop
+             (balanced instead of v76's orphan row).
+   v76 - added Team Roadmap template (cat:Software, indigo #6366f1). First template with
+         concurrent/overlapping phases — taught buildTemplate() to read per-phase startOffset
+         when present, falling back to sequential chaining otherwise. Target-date backward-calc
+         now uses max(offset+days) instead of sum(days) for concurrent templates.
+         5 initiatives (Onboarding Redesign, Search Relevance, Mobile Navigation, Analytics
+         Dashboard, API Rate Limiting) with realistic overlap across ~13 weeks.
+         Each phase pre-populated with role shells (PM/ENG/Design/QA) — demonstrates v75's
+         role-aware contacts feature. Each has a brief notes field to anchor the initiative.
+         Grid is now 3+3+3+1 on desktop — accepted the orphan instead of cutting SAT Prep.
+         buildTemplate also now preserves notes and contacts from template data (deep-clones
+         contacts to avoid shared references across instances).
+   v75 - added Role field to contacts. Works across industries, not just software.
+         Role renders as full-width input above Name/Phone/Email in the edit drawer.
+         Type-aware datalist suggestions (ROLE_SUGGESTIONS map keyed by estimate type):
+           software: PM, ENG, Design, QA, Eng Manager, Tech Lead
+           construction: GC, Foreman, Electrician, Plumber, HVAC, Inspector, Architect
+           film: Producer, Director, DP, 1st AD, Editor, Sound, Gaffer, PA
+           events: Coordinator, Vendor, Venue Contact, Caterer, Florist, Photographer, DJ
+           medical: Doctor, Nurse, Specialist, Coordinator, Billing
+           generic: Lead, Owner, Contact, Primary, Backup
+         Free-text fallback — users can type anything. New contact init includes role:''.
+         Print report uses fmtContactLine() helper: "Role — Name · phone · email" when role
+         present, just "Name · phone · email" otherwise. contactHasContent() treats role-only
+         contacts as valid (so a "PM — TBD" entry renders without phone/email). Backward-
+         compatible: existing shared URLs without role still render fine.
+   v74 - added two templates to round out the grid to 9 (3×3 on desktop) and hit audiences
+         core to the product's thesis:
+         (1) Software Project (cat:Software, blue #2563eb): Discovery→Design→Engineering→QA→
+             Beta→Launch→Post-Launch. Targets the PM/dev audience that inspired d00r's
+             "plans stuck in PPTs" origin story.
+         (2) Product Launch (cat:Startup, teal #0d9488): Research→Positioning→Brand→Pre-Launch→
+             Launch Day→Activation→Retention. Targets founders and go-to-market folks.
+         Both placed at top of TEMPLATES array so they're the first two templates after demos.
+   v73 - drop view-toggle tooltips. Two iterations (below-button clipped by calendar stacking,
+         above-button clipped at top of viewport) weren't landing cleanly. SVG icons are
+         self-explanatory; keyboard shortcuts (C/T/L) still work for anyone who finds them.
+         Removed the custom ::after/::before CSS and the data-tip attrs. Less code, no risk.
+   v72 - estimate bar contrast + input validation:
+         (1) Labels in the estimate bar were grey (var(--ink-2)) against pale accent tints,
+             producing poor contrast especially with green/dusty-rose accents. Added accentInk()
+             that derives a deep saturated harmonized color from the accent (L=24%, S=20-80%).
+             Bar, label, and total all use it — stays on-brand but always readable.
+         (2) Estimate fields accepted any text silently, with garbage dropped on parse. Added
+             validateEstimateField(): flags non-numeric input with red border + inline hint
+             ("Can't read 'dafadf' as a number. Try something like 1250 or 1,250.00").
+             Accepts currency symbols, commas, spaces. Added inputmode="decimal" for mobile
+             numeric keyboard. Validates on every input + on initial render (catches bad values
+             loaded from URL hash state).
+   v71 - view-toggle tooltips were getting buried under the calendar content below them, because
+         .app-hdr has position:sticky z:100 creating a stacking context and the tooltip at
+         z:9999 was clipped or painted behind main body layers. Flipped tooltip to render ABOVE
+         the button (bottom:100%+8px) with a small downward-pointing arrow. Also bumped padding,
+         font-weight, border-radius, and added shadow so it pops like an intentional chip.
+   v70 - fix double-tooltip on view toggles: buttons had both a native `title` and a custom
+         ::after CSS tooltip reading `attr(title)`, so on hover both rendered (the custom dark
+         chip + the browser's own tooltip overlaid). Switched custom tooltip to read `data-tip`
+         and removed `title` attrs from the three view buttons. Wrapped the custom tooltip rule
+         in @media (hover: hover) so touch devices don't render it at all.
+   v69 - mobile polish pass:
+         (1) Undo/Redo/Today arrows were Unicode chars (↩↪) which iOS renders as blue emoji.
+             Replaced all instances (desktop header undo/redo, Today button, mobile sheet undo/redo)
+             with inline SVG so they look consistent with the calendar/timeline/list icons.
+         (2) Plan/Client Name placeholder now varies by estimate type: construction→"Smith Kitchen
+             Reno", film→"Untitled Short Film", events→"Sarah & Alex Wedding", medical→"Cycle 1",
+             generic→"My Plan". Set in syncSidebar().
+         (3) View-toggle titles ("Calendar (C)" etc.) were showing as native tooltips on mobile tap.
+             Strip all title attrs at runtime when touch is detected — they're desktop hover hints only.
    v68 - fix doubled zeros in footer brand line: "00fam by 00utput" → "0fam by 0utput".
          The zero-opacity treatment wraps the existing zero, not prepends a new one.
    v67 - added 0fam footer to landing: Space Mono wordmark lockup "d00r — part of 0fam by 0utput"
@@ -1964,6 +2261,18 @@ const PALETTE = [
   '#ff5c00','#305cde','#007BA7','#096c6c','#873260','#750851'
 ];
 
+// ─── PHASE STATUSES ──────────────────────────────────
+// Optional per-phase status. Auto-detected: status chrome (columns, dots, pills)
+// only appears in views if AT LEAST ONE phase in the plan has a status set.
+// Symbol is used in print reports for B&W survival (color alone isn't enough
+// on a photocopy). Key is what's stored on phase.status.
+const STATUSES = {
+  planned:  { label:'Planned',     symbol:'○', color:'#6b7280', bg:'#f3f4f6' },
+  progress: { label:'In Progress', symbol:'◐', color:'#2563eb', bg:'#dbeafe' },
+  risk:     { label:'At Risk',     symbol:'⚠', color:'#d97706', bg:'#fef3c7' },
+  done:     { label:'Done',        symbol:'●', color:'#16a34a', bg:'#dcfce7' }
+};
+
 
 
 // ─── PHASE FIELD PROFILES ────────────────────────────
@@ -2091,6 +2400,136 @@ const DEMOS = [
 // TEMPLATES (ask pre-fill before loading)
 // ═══════════════════════════════════════════════════
 const TEMPLATES = [
+  {
+    id:'roadmap', cat:'Software', targetDateLabel:'End of quarter / planning horizon (optional)', estimateType:'generic', label:'Team Roadmap',
+    co:'', tag:'', hex:'6366f1',
+    // Concurrent initiatives — each has a startOffset (days from plan start) and duration.
+    // Three run from day 0 to immediately demonstrate the concurrent-stream value prop;
+    // two stagger in later so the roadmap still feels dynamic, not just five parallel bars.
+    // Contacts pre-populated with role shells (PM/ENG/Design/QA) for users to fill in.
+    phases:[
+      {
+        name:'Onboarding Redesign', startOffset:0, days:42, status:'progress',
+        notes:'Revamp first-run experience. Reduce time-to-activation.',
+        contacts:[ {role:'PM'}, {role:'ENG'}, {role:'Design'}, {role:'QA'} ]
+      },
+      {
+        name:'Search Relevance', startOffset:0, days:63, status:'progress',
+        notes:'Improve ranking and recall. Ship A/B test to 10%.',
+        contacts:[ {role:'PM'}, {role:'ENG'}, {role:'Design'} ]
+      },
+      {
+        name:'Mobile Navigation', startOffset:0, days:35, status:'risk',
+        notes:'New bottom nav + gesture affordances.',
+        contacts:[ {role:'PM'}, {role:'ENG'}, {role:'Design'}, {role:'QA'} ]
+      },
+      {
+        name:'Analytics Dashboard', startOffset:21, days:49, status:'planned',
+        notes:'Self-serve dashboards for internal teams.',
+        contacts:[ {role:'PM'}, {role:'ENG'} ]
+      },
+      {
+        name:'API Rate Limiting', startOffset:42, days:21, status:'planned',
+        notes:'Platform hardening. Per-token quotas.',
+        contacts:[ {role:'PM'}, {role:'ENG'} ]
+      },
+    ]
+  },
+  {
+    id:'sports', cat:'Sports', targetDateLabel:'Season opener / final target date (optional)', estimateType:'generic', label:'Sports Season',
+    co:'', tag:'', hex:'ef4444',
+    prefillPrompt: 'Season schedule or preseason training?',
+    variants: [
+      {
+        label:'Season Schedule',
+        // Season chapters use startOffset for explicit placement; games are 1-day markers
+        // sprinkled inside the chapters (concurrent phases). Games share one color so they
+        // visually read as "game markers" distinct from the season palette chapters.
+        // Home venue: MSG. Away games use each opponent's real home arena.
+        phases:[
+          // ─── Season chapters ───
+          // Explicit colors (not palette-generated) so every chapter reads as vibrant red
+          // rather than burgundy-at-dark-end → pink-at-light-end. Mixes reds and roses for
+          // hue variation within the red family.
+          { name:'Preseason',      startOffset:0,  days:14, color:'#dc2626',
+            notes:'Tryouts, fitness testing, team forming.' },
+          { name:'Early Season',   startOffset:14, days:21, color:'#e11d48' },
+          { name:'Mid-Season',     startOffset:35, days:28, color:'#ef4444' },
+          { name:'Rivalry Week',   startOffset:63, days:7,  color:'#f43f5e',
+            notes:'Headliner matchup — big crowds expected.' },
+          { name:'Playoffs',       startOffset:70, days:14, color:'#f87171' },
+          { name:'Banquet & Wrap', startOffset:84, days:3,  color:'#fb7185',
+            notes:'Awards night + offseason kickoff.' },
+
+          // ─── Game markers (1-day phases, sprinkled inside chapters) ───
+          { name:'vs Lakers — 7:00 PM',   startOffset:10, days:1, color:'#f59e0b',
+            location:'Madison Square Garden, New York, NY',
+            notes:'Home opener. Doors 6:00 PM.' },
+          { name:'@ Celtics — 7:30 PM',   startOffset:16, days:1, color:'#f59e0b',
+            location:'TD Garden, Boston, MA',
+            notes:'Bus leaves 2:00 PM from the gym.' },
+          { name:'vs Heat — 7:00 PM',     startOffset:22, days:1, color:'#f59e0b',
+            location:'Madison Square Garden, New York, NY' },
+          { name:'@ Bulls — 8:00 PM',     startOffset:28, days:1, color:'#f59e0b',
+            location:'United Center, Chicago, IL',
+            notes:'Overnight trip — hotel info to follow.' },
+          { name:'vs Warriors — 7:00 PM', startOffset:38, days:1, color:'#f59e0b',
+            location:'Madison Square Garden, New York, NY' },
+          { name:'vs Nuggets — 7:30 PM',  startOffset:65, days:1, color:'#f59e0b',
+            location:'Madison Square Garden, New York, NY',
+            notes:'Rivalry Week headliner. Expect a full house.' },
+          { name:'@ Mavericks — 8:30 PM', startOffset:72, days:1, color:'#f59e0b',
+            location:'American Airlines Center, Dallas, TX',
+            notes:'Playoffs Game 1 — away.' },
+          { name:'vs 76ers — 7:00 PM',    startOffset:78, days:1, color:'#f59e0b',
+            location:'Madison Square Garden, New York, NY',
+            notes:'Playoffs Game 2 — home.' },
+        ]
+      },
+      {
+        label:'Preseason Training',
+        phases:[
+          {name:'Fitness Prep',        days:14,
+            notes:'Solo conditioning. Running, core, mobility.' },
+          {name:'Doubles — Week 1',    days:7,
+            notes:'Two-a-days. AM cardio + PM tactical.' },
+          {name:'Doubles — Week 2',    days:7,
+            notes:'Two-a-days continuing. Scrimmage-heavy PM sessions.' },
+          {name:'Scrimmage Week',      days:7,
+            notes:'One-a-day practices. Inter-squad games.' },
+          {name:'Final Cuts & Roster', days:3 },
+          {name:'Opening Day',         days:1,
+            notes:'First official game of the season.' },
+        ]
+      }
+    ]
+  },
+  {
+    id:'software', cat:'Software', targetDateLabel:'Target ship date (optional)', estimateType:'generic', label:'Agency Project',
+    co:'', tag:'', hex:'2563eb',
+    phases:[
+      {name:'Discovery & Scoping', days:10, status:'done'},
+      {name:'Design & Specs',      days:14, status:'done'},
+      {name:'Engineering',         days:28, status:'progress'},
+      {name:'QA & Bug Bash',       days:7,  status:'planned'},
+      {name:'Beta Release',        days:7,  status:'planned'},
+      {name:'Launch',              days:2,  status:'planned'},
+      {name:'Post-Launch Review',  days:5,  status:'planned'},
+    ]
+  },
+  {
+    id:'productlaunch', cat:'Startup', targetDateLabel:'Target launch date (optional)', estimateType:'generic', label:'Product Launch',
+    co:'', tag:'', hex:'0d9488',
+    phases:[
+      {name:'Market Research',        days:14},
+      {name:'Positioning & Messaging',days:10},
+      {name:'Brand & Assets',         days:14},
+      {name:'Pre-Launch Campaign',    days:21},
+      {name:'Launch Day',             days:1},
+      {name:'Activation & Growth',    days:30},
+      {name:'Retention & Iteration',  days:30},
+    ]
+  },
   {
     id:'painting', cat:'Trades', targetDateLabel:'When do you need it done? (optional)', estimateType:'construction', label:'Painting Project',
     co:'', tag:'', hex:'E85D26',
@@ -2534,21 +2973,51 @@ function buildTemplate(tmpl, phases, withPrefill, targetDate) {
   const pal = genPalette('#'+tmpl.hex, phases.length);
   const builtPhases = [];
 
+  // Concurrent templates use per-phase startOffset (days from plan start);
+  // sequential templates chain each phase after the previous one.
+  const isConcurrent = phases.some(p => typeof p.startOffset === 'number');
+
+  // Compute total span for target-date backward-calc.
+  // Concurrent: max end day across all phases. Sequential: sum of days.
+  const totalSpan = isConcurrent
+    ? phases.reduce((max, p) => Math.max(max, (p.startOffset||0) + p.days), 0)
+    : phases.reduce((sum, p) => sum + p.days, 0);
+
   let startFrom = TODAY_S;
   if(targetDate && withPrefill) {
-    // Work backwards: total duration = sum of all phase days
-    const totalDays = phases.reduce((sum, p) => sum + p.days, 0);
-    startFrom = addDays(targetDate, -totalDays);
+    startFrom = addDays(targetDate, -totalSpan);
     // Don't start in the past before today
     if(startFrom < TODAY_S) startFrom = TODAY_S;
   }
 
-  let cur = startFrom;
-  phases.forEach((p,i) => {
-    const end = addDays(cur, p.days-1);
-    builtPhases.push({ id:uid(), name:p.name, startDate:cur, endDate:end, color:pal[i] });
-    cur = addDays(end, 1);
-  });
+  // Helper: copy all optional phase-level fields (color override, location, notes,
+  // contacts) from the template's phase definition into the built phase.
+  const applyOptional = (built, p) => {
+    if(p.color) built.color = p.color;
+    if(p.location) built.location = p.location;
+    if(p.notes) built.notes = p.notes;
+    if(p.status) built.status = p.status;
+    if(p.contacts) built.contacts = p.contacts.map(c => ({...c}));
+  };
+
+  if(isConcurrent) {
+    phases.forEach((p, i) => {
+      const phaseStart = addDays(startFrom, p.startOffset || 0);
+      const phaseEnd   = addDays(phaseStart, p.days - 1);
+      const built = { id:uid(), name:p.name, startDate:phaseStart, endDate:phaseEnd, color:pal[i] };
+      applyOptional(built, p);
+      builtPhases.push(built);
+    });
+  } else {
+    let cur = startFrom;
+    phases.forEach((p, i) => {
+      const end = addDays(cur, p.days - 1);
+      const built = { id:uid(), name:p.name, startDate:cur, endDate:end, color:pal[i] };
+      applyOptional(built, p);
+      builtPhases.push(built);
+      cur = addDays(end, 1);
+    });
+  }
 
   return {
     co: tmpl.co || '',
@@ -2676,12 +3145,19 @@ function darkenHex(hex, targetL) {
 }
 
 function makeCard(item, isTemplate) {
-  const phases = item.variants ? item.variants[0].phases : item.phases;
+  const allPhases = item.variants ? item.variants[0].phases : item.phases;
+  // Cap preview at 7 phases — some templates (Sports Season) have many single-day event
+  // markers after the macro chapters; we only need the chapter arc to signal the template's
+  // shape. The card is a thumbnail, not a full render.
+  const phases = allPhases.slice(0, 7);
   const maxDays = Math.max(...phases.map(p=>p.days));
   const pal = genPalette('#'+item.hex, phases.length);
   const barsHTML = phases.map((p,i) => {
     const w = Math.max(12, Math.min(100, (p.days/maxDays)*100));
-    return `<div class="demo-bar" style="width:${w}%;background:${pal[i]}"></div>`;
+    // Respect per-phase color overrides from template data (e.g. game markers);
+    // fall back to auto-generated palette by index.
+    const color = p.color || pal[i];
+    return `<div class="demo-bar" style="width:${w}%;background:${color}"></div>`;
   }).join('');
   const btnLabel = isTemplate ? 'Use template →' : 'Open demo →';
 
@@ -2824,14 +3300,36 @@ function renderDrawerTypeFields(phase) {
   });
 }
 
+// Role suggestions by estimate type — shown as datalist dropdown hints;
+// free-text, not locked. Users can type anything.
+const ROLE_SUGGESTIONS = {
+  software:     ['PM','ENG','Design','QA','Eng Manager','Tech Lead'],
+  construction: ['GC','Foreman','Electrician','Plumber','HVAC','Inspector','Architect'],
+  film:         ['Producer','Director','DP','1st AD','Editor','Sound','Gaffer','PA'],
+  events:       ['Coordinator','Vendor','Venue Contact','Caterer','Florist','Photographer','DJ'],
+  medical:      ['Doctor','Nurse','Specialist','Coordinator','Billing'],
+  generic:      ['Lead','Owner','Contact','Primary','Backup']
+};
+
+function currentRoleList() {
+  const type = state.estimate?.type || 'generic';
+  return ROLE_SUGGESTIONS[type] || ROLE_SUGGESTIONS.generic;
+}
+
 function renderDrawerContacts(phase) {
   const container = document.getElementById('drawerContacts');
   if(!container) return;
   const contacts = phase.contacts || [];
+  const roleList = currentRoleList();
+  const datalistId = 'role-suggestions';
 
-  container.innerHTML = contacts.map((c,i) => `
+  // Single datalist shared across all rows
+  const datalistHtml = `<datalist id="${datalistId}">${roleList.map(r=>`<option value="${escHtml(r)}">`).join('')}</datalist>`;
+
+  container.innerHTML = datalistHtml + contacts.map((c,i) => `
     <div class="contact-row" data-idx="${i}">
       <button class="contact-remove" data-idx="${i}">×</button>
+      <input type="text"  class="drawer-input contact-role full"  data-idx="${i}" data-field="role"  value="${c.role||''}"  placeholder="Role (e.g. ${escHtml(roleList[0]||'PM')})" list="${datalistId}" style="font-size:12px;padding:5px 7px;">
       <input type="text"  class="drawer-input contact-name"  data-idx="${i}" data-field="name"  value="${c.name||''}"  placeholder="Name" style="font-size:12px;padding:5px 7px;">
       <input type="tel"   class="drawer-input contact-phone" data-idx="${i}" data-field="phone" value="${c.phone||''}" placeholder="Phone" style="font-size:12px;padding:5px 7px;">
       <input type="email" class="drawer-input contact-email full" data-idx="${i}" data-field="email" value="${c.email||''}" placeholder="Email" style="font-size:12px;padding:5px 7px;">
@@ -2843,7 +3341,7 @@ function renderDrawerContacts(phase) {
       const p = state.phases.find(p=>p.id===drawerPhaseId);
       if(!p) return;
       if(!p.contacts) p.contacts = [];
-      if(!p.contacts[i]) p.contacts[i] = {name:'',phone:'',email:''};
+      if(!p.contacts[i]) p.contacts[i] = {role:'',name:'',phone:'',email:''};
       p.contacts[i][f] = inp.value;
     });
   });
@@ -2954,12 +3452,32 @@ function syncDrawerToPhase() {
 
 let drawerPhaseId = null;
 
+// Build a Google Maps search URL from a free-text location.
+// Works for addresses, place names, and "Venue, City" strings.
+function mapsURL(location) {
+  if(!location || !location.trim()) return '';
+  return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(location.trim());
+}
+
+// Show/hide the "Open in Maps" link next to drawer location input based on content.
+function updateLocationMapLink() {
+  const locEl = document.getElementById('drawerLocation');
+  const linkEl = document.getElementById('drawerLocationMap');
+  if(!locEl || !linkEl) return;
+  const v = (locEl.value || '').trim();
+  if(v) {
+    linkEl.href = mapsURL(v);
+    linkEl.style.display = 'inline-block';
+  } else {
+    linkEl.style.display = 'none';
+    linkEl.href = '#';
+  }
+}
+
 function openEditDrawer(id) {
   const phase = state.phases.find(p => p.id === id);
   if(!phase) return;
-  drawerPhaseId = id;
-
-  document.getElementById('drawerName').value  = phase.name;
+  drawerPhaseId = id;  document.getElementById('drawerName').value  = phase.name;
   document.getElementById('drawerStart').value = phase.startDate;
   document.getElementById('drawerEnd').value   = phase.endDate;
   document.getElementById('drawerErr').textContent = '';
@@ -2968,6 +3486,7 @@ function openEditDrawer(id) {
   const notesEl = document.getElementById('drawerNotes');
   if(locEl)   locEl.value   = phase.location || '';
   if(notesEl) notesEl.value = phase.notes    || '';
+  updateLocationMapLink();
   // Render detail sections
   renderDrawerTypeFields(phase);
   renderDrawerContacts(phase);
@@ -2986,6 +3505,38 @@ function openEditDrawer(id) {
       const p = state.phases.find(p => p.id === drawerPhaseId);
       if(p) { p.color = s.dataset.c; renderPhaseOverlays(); }
     });
+  });
+
+  // Render status chips (always visible — clear state = no status set)
+  const sr = document.getElementById('drawerStatusRow');
+  const chipHtml = Object.keys(STATUSES).map(key => {
+    const s = STATUSES[key];
+    const on = phase.status === key ? ' on' : '';
+    return `<div class="drawer-status-chip${on}" data-status="${key}"><span class="symbol">${s.symbol}</span>${s.label}</div>`;
+  }).join('');
+  sr.innerHTML = chipHtml + `<button class="drawer-status-clear" id="drawerStatusClear" type="button">Clear</button>`;
+  sr.querySelectorAll('.drawer-status-chip').forEach(c => {
+    c.addEventListener('click', () => {
+      const p = state.phases.find(p => p.id === drawerPhaseId);
+      if(!p) return;
+      // Toggle: clicking the active chip clears it
+      if(p.status === c.dataset.status) {
+        delete p.status;
+        c.classList.remove('on');
+      } else {
+        sr.querySelectorAll('.drawer-status-chip').forEach(x => x.classList.remove('on'));
+        c.classList.add('on');
+        p.status = c.dataset.status;
+      }
+      render();
+    });
+  });
+  document.getElementById('drawerStatusClear').addEventListener('click', () => {
+    const p = state.phases.find(p => p.id === drawerPhaseId);
+    if(!p) return;
+    delete p.status;
+    sr.querySelectorAll('.drawer-status-chip').forEach(x => x.classList.remove('on'));
+    render();
   });
 
   document.getElementById('editDrawer').classList.add('open');
@@ -3022,6 +3573,7 @@ function wireDrawer() {
   document.getElementById('drawerLocation')?.addEventListener('input', e => {
     const p = state.phases.find(p => p.id === drawerPhaseId);
     if(p) p.location = e.target.value;
+    updateLocationMapLink();
   });
   document.getElementById('drawerNotes')?.addEventListener('input', e => {
     const p = state.phases.find(p => p.id === drawerPhaseId);
@@ -3032,7 +3584,7 @@ function wireDrawer() {
     const p = state.phases.find(p => p.id === drawerPhaseId);
     if(!p) return;
     if(!p.contacts) p.contacts = [];
-    p.contacts.push({name:'',phone:'',email:''});
+    p.contacts.push({role:'',name:'',phone:'',email:''});
     renderDrawerContacts(p);
     // Focus first input in new contact
     const rows = document.querySelectorAll('#drawerContacts .contact-row');
@@ -3118,7 +3670,56 @@ function wireDrawer() {
 // PHASE OVERLAYS (continuous bars)
 // ═══════════════════════════════════════════════════
 
+// Per-week density for calendar overlays. Each week row decides its own bar height
+// based on max concurrent phases on any day within that Sun–Sat row. A quiet week
+// stays full-height even if the plan is crowded overall; a crowded week compresses
+// only itself. Matches the Outlook / Google Calendar pattern — honest to what's
+// on screen, no global flag that confuses the viewer.
+
+// Build a date → concurrent-count map once per render pass.
+function buildPerDayCount(phases) {
+  const perDay = new Map();
+  phases.forEach(p => {
+    let d = s2d(p.startDate);
+    const end = s2d(p.endDate);
+    while(+d <= +end) {
+      const ds = d2s(d);
+      perDay.set(ds, (perDay.get(ds) || 0) + 1);
+      d.setDate(d.getDate() + 1);
+    }
+  });
+  return perDay;
+}
+
+// Sunday-of-week as a YYYY-MM-DD string.
+function sundayOf(date_S) {
+  const d = s2d(date_S);
+  d.setDate(d.getDate() - d.getDay());
+  return d2s(d);
+}
+
 function renderPhaseOverlays() {
+  // Per-week density: activates on any week row where 4+ phases overlap on any day.
+  // Threshold 4+ means 3-phase weeks stay at full 18px, 4+ weeks compress to 8px.
+  const DENSE_THRESHOLD = 4;
+  const TOP_OFF = 30;
+
+  const perDay = state.phases.length ? buildPerDayCount(state.phases) : new Map();
+  // Memoize each week-row's max so repeated segment lookups in the same week are O(1).
+  const weekMaxCache = new Map();
+  function maxInWeek(sunday_S) {
+    if(weekMaxCache.has(sunday_S)) return weekMaxCache.get(sunday_S);
+    let max = 0;
+    let d = s2d(sunday_S);
+    for(let i=0; i<7; i++) {
+      const c = perDay.get(d2s(d)) || 0;
+      if(c > max) max = c;
+      d.setDate(d.getDate() + 1);
+    }
+    weekMaxCache.set(sunday_S, max);
+    return max;
+  }
+
   document.querySelectorAll('.cal-days').forEach(grid => {
     // Remove stale overlays
     grid.querySelectorAll('.phase-overlay-bar').forEach(el=>el.remove());
@@ -3183,10 +3784,16 @@ function renderPhaseOverlays() {
         const endCell=cellMap.get(seg.endDate);
         if(!startCell||!endCell) return;
 
+        // Per-week density: each segment sits in exactly one week-row (segments are
+        // clipped to Sun–Sat boundaries). Density is that week's max concurrent.
+        const weekMax = maxInWeek(sundayOf(seg.startDate));
+        const DENSE = weekMax >= DENSE_THRESHOLD;
+        const BAR_H = DENSE ? 8 : 18;
+        const GAP = DENSE ? 2 : 3;
+
         const sr=startCell.getBoundingClientRect();
         const er=endCell.getBoundingClientRect();
 
-        const BAR_H=18, GAP=3, TOP_OFF=30;
         const left   = sr.left - gridRect.left + 2;
         const width  = er.right - sr.left - 4;
         const top    = (sr.top - gridRect.top) + TOP_OFF + lane*(BAR_H+GAP);
@@ -3197,7 +3804,7 @@ function renderPhaseOverlays() {
         const tc = textOnBg(phase.color);
 
         const bar = document.createElement('div');
-        bar.className = 'phase-overlay-bar';
+        bar.className = 'phase-overlay-bar' + (DENSE ? ' dense' : '');
         bar.style.cssText = [
           'position:absolute',
           `left:${left}px`, `top:${top}px`,
@@ -3211,9 +3818,20 @@ function renderPhaseOverlays() {
         ].join(';');
 
         if(width > 44) {
+          // Status dot — prepended before the label, same pattern as timeline/list.
+          // In dense mode CSS shrinks it; on hover it scales back up with the bar.
+          if(phase.status && STATUSES[phase.status]) {
+            const dot = document.createElement('span');
+            dot.className = 'status-dot';
+            dot.style.background = STATUSES[phase.status].color;
+            dot.title = STATUSES[phase.status].label;
+            bar.appendChild(dot);
+          }
           const lbl = document.createElement('span');
+          lbl.className = 'bar-label';
           lbl.style.cssText = `font-size:10px;font-weight:600;color:${tc};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;`;
-          // Show name on first segment only (or any segment wide enough)
+          // Show name on first segment only (or any segment wide enough).
+          // In dense mode the label is hidden by CSS and revealed on hover.
           lbl.textContent = seg.isPhaseStart ? phase.name : (width > 80 ? phase.name : '');
           bar.appendChild(lbl);
         }
@@ -3265,6 +3883,20 @@ function accentTint(hex, opacity) {
   } catch(e) { return '#E4F3EE'; }
 }
 
+// Dark harmonized ink derived from accent — used as label color on tinted bars
+// so text always has strong contrast against the light tint, while staying on-brand.
+function accentInk(hex) {
+  try {
+    const [r,g,b] = hex2rgb(hex);
+    const [h,s,l] = rgb2hsl(r,g,b);
+    // Deep saturated version, 22-28% luminance — readable on any tint
+    const inkL = 24;
+    const inkS = Math.min(Math.max(s * 0.8, 20), 80);
+    const [ir,ig,ib] = hsl2rgb(h, inkS, inkL);
+    return rgb2hex(ir,ig,ib);
+  } catch(e) { return '#111111'; }
+}
+
 function renderEstimateBar() {
   const e = state.estimate;
   const bar = document.getElementById('estimateBar');
@@ -3275,16 +3907,21 @@ function renderEstimateBar() {
   if(!hasAny) { bar.classList.add('hidden'); return; }
 
   bar.classList.remove('hidden');
-  // Accent-tinted background
-  const bg = accentTint(state.accent||'#111111', 0.12);
+  // Accent-tinted background + deep harmonized text color for contrast
+  const accent = state.accent || '#111111';
+  const bg = accentTint(accent, 0.12);
+  const ink = accentInk(accent);
   bar.style.background = bg;
   bar.style.borderBottomColor = 'var(--border)';
+  bar.style.color = ink;
 
   const cur = e.currency || '$';
   const totalFmt = fmtMoney(total, cur);
   const profile = ESTIMATE_PROFILES[e.type||'generic'] || ESTIMATE_PROFILES.generic;
 
-  document.getElementById('estimateBarLabel').textContent = e.label || profile.defaultLabel || 'Estimate';
+  const labelEl = document.getElementById('estimateBarLabel');
+  labelEl.textContent = e.label || profile.defaultLabel || 'Estimate';
+  labelEl.style.color = ink;
 
   // Render all fields dynamically (not just first two)
   const fieldsEl = document.getElementById('estimateBarFields');
@@ -3298,7 +3935,7 @@ function renderEstimateBar() {
   fieldsEl.innerHTML = fieldChips;
 
   const totalEl = document.getElementById('estimateBarTotal');
-  if(total > 0) { totalEl.classList.remove('hidden'); totalEl.textContent = `Total: ${totalFmt}`; }
+  if(total > 0) { totalEl.classList.remove('hidden'); totalEl.textContent = `Total: ${totalFmt}`; totalEl.style.color = ink; }
   else totalEl.classList.add('hidden');
 
   // Sidebar total
@@ -3336,8 +3973,9 @@ function renderEstimateSidebarFields() {
     const val = (e.fields||{})[f.key] || '';
     return `<div class="sb-field">
       <label class="sb-label">${f.label}</label>
-      <input type="text" class="sb-input est-field-input" data-key="${f.key}"
+      <input type="text" inputmode="decimal" class="sb-input est-field-input" data-key="${f.key}"
         placeholder="0.00" value="${val}">
+      <div class="est-field-hint" data-hint-for="${f.key}" style="display:none;font-size:11px;color:#c0392b;margin-top:4px;line-height:1.4;"></div>
     </div>`;
   }).join('');
 
@@ -3346,6 +3984,7 @@ function renderEstimateSidebarFields() {
     inp.addEventListener('input', ev => {
       if(!state.estimate.fields) state.estimate.fields = {};
       state.estimate.fields[ev.target.dataset.key] = ev.target.value;
+      validateEstimateField(ev.target);
       // Auto-enable estimate when user enters a value
       if(ev.target.value && !state.estimate.enabled) {
         state.estimate.enabled = true;
@@ -3359,7 +3998,42 @@ function renderEstimateSidebarFields() {
       if(disp) disp.textContent = total > 0 ? `Total: ${fmtMoney(total, cur)}` : '';
       afterStateChange();
     });
+    // Validate initial values on render
+    validateEstimateField(inp);
   });
+}
+
+// Validate estimate numeric input. Shows a hint if value has unparseable garbage
+// (letters, multiple decimals, etc.). Lenient: accepts currency symbols, commas, "k"/"m" suffixes
+// by stripping and parsing; flags only when the result is truly non-numeric.
+function validateEstimateField(inp) {
+  const raw = (inp.value || '').trim();
+  // Look for hint in same .sb-field container (handles desktop + mobile duplication)
+  const field = inp.closest('.sb-field');
+  const hint = field ? field.querySelector('.est-field-hint') : null;
+  if(!hint) return;
+
+  // Empty is always valid
+  if(!raw) {
+    inp.style.borderColor = '';
+    hint.style.display = 'none';
+    return;
+  }
+
+  // Strip allowed non-numeric chars: currency symbols, commas, spaces
+  const cleaned = raw.replace(/[,\s$€£¥]/g, '');
+  // After cleaning, only digits and at most one decimal should remain
+  const isValid = /^-?\d*\.?\d*$/.test(cleaned) && cleaned !== '' && cleaned !== '.' && cleaned !== '-';
+  const parsed = parseFloat(cleaned);
+
+  if(!isValid || isNaN(parsed)) {
+    inp.style.borderColor = '#c0392b';
+    hint.textContent = `Can't read "${raw}" as a number. Try something like 1250 or 1,250.00`;
+    hint.style.display = 'block';
+  } else {
+    inp.style.borderColor = '';
+    hint.style.display = 'none';
+  }
 }
 
 function syncEstimateSidebar() {
@@ -3512,6 +4186,43 @@ function renderPhaseList() {
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Format a single contact as display string.
+// If role present: "Role — Name · phone · email"
+// Otherwise:       "Name · phone · email"
+function fmtContactLine(c) {
+  if(!c) return '';
+  const hasRole = !!(c.role && c.role.trim());
+  const nameAndDetails = [c.name, c.phone, c.email].filter(Boolean).join(' · ');
+  if(hasRole && nameAndDetails) return `${escHtml(c.role)} — ${escHtml(nameAndDetails)}`;
+  if(hasRole) return escHtml(c.role);
+  return escHtml(nameAndDetails);
+}
+function contactHasContent(c) {
+  return !!(c && (c.role || c.name || c.phone || c.email));
+}
+
+// Format a location cell for the printed report. When there's content, wraps it
+// in an anchor linking to a Google Maps search for the location so parents/clients
+// can tap through from a shared plan.
+function fmtLocationCell(location) {
+  const v = (location || '').trim();
+  if(!v) return '';
+  return `<a href="${mapsURL(v)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:2px;text-decoration-thickness:1px;">${escHtml(v)}</a>`;
+}
+
+// ─── STATUS HELPERS ───────────────────────────────────
+// statusPill() renders a colored pill with symbol + label for list view and print.
+// hasAnyStatus() is the auto-detect gate: if any phase has a status set, chrome
+// appears in all views. Otherwise it stays hidden.
+function statusPill(status) {
+  if(!status || !STATUSES[status]) return '';
+  const s = STATUSES[status];
+  return `<span class="status-pill" data-status="${status}"><span class="symbol">${s.symbol}</span>${escHtml(s.label)}</span>`;
+}
+function hasAnyStatus(phases) {
+  return (phases || []).some(p => p.status && STATUSES[p.status]);
 }
 
 // ─── MONTH VIEW ──────────────────────────────────
@@ -3739,11 +4450,14 @@ function renderGanttView() {
     const left = (off/total)*100;
     const wid  = Math.max((dur/total)*100, 0.5);
     const tc   = textOnBg(p.color);
+    const statusMark = p.status && STATUSES[p.status]
+      ? `<span class="status-dot" style="background:${STATUSES[p.status].color}" title="${STATUSES[p.status].label}"></span>`
+      : '';
     return `<div class="gantt-row">
       <div class="gantt-row-name">${escHtml(p.name)}</div>
       <div class="gantt-row-track">
         <div class="gantt-bar" style="left:${left}%;width:${wid}%;background:${p.color}">
-          <span class="gantt-bar-lbl" style="color:${tc}">${escHtml(p.name)}</span>
+          <span class="gantt-bar-lbl" style="color:${tc}">${statusMark}${escHtml(p.name)}</span>
         </div>
         ${TODAY_S>=mn&&TODAY_S<=mx ? `<div class="gantt-today-line" style="left:${(diffDays(mn,TODAY_S)/total)*100}%"></div>` : ''}
       </div>
@@ -3794,6 +4508,7 @@ function renderListView() {
   }
 
   const profile = getPhaseProfile();
+  const hasStatus = hasAnyStatus(phases);
   const hasLocation = phases.some(p => p.location);
   const hasNotes = phases.some(p => p.notes);
   const hasContacts = phases.some(p => p.contacts && p.contacts.length);
@@ -3807,7 +4522,9 @@ function renderListView() {
   const activeTypeFields = hasTypeFields ? profile.filter(f => phases.some(p => (p.typeFields||{})[f.key])) : [];
 
   let html = '<div class="lv-table-wrap"><table class="lv-table"><thead><tr>';
-  html += '<th>#</th><th>Phase</th><th>Start</th><th>End</th>';
+  html += '<th>#</th><th>Phase</th>';
+  if(hasStatus) html += '<th>Status</th>';
+  html += '<th>Start</th><th>End</th>';
   activeTypeFields.forEach(f => html += `<th>${escHtml(f.label)}</th>`);
   if(hasLocation) html += '<th>Location</th>';
   if(hasContacts) html += '<th>Contacts</th>';
@@ -3819,15 +4536,16 @@ function renderListView() {
     html += `<tr style="cursor:pointer" onclick="openEditDrawer('${p.id}')">`;
     html += `<td>${i+1}</td>`;
     html += `<td><span class="lv-color" style="background:${p.color||'#111'}"></span><span class="lv-name">${escHtml(p.name)}</span></td>`;
+    if(hasStatus) html += `<td>${statusPill(p.status)}</td>`;
     html += `<td style="white-space:nowrap">${fmtDisp(p.startDate)}</td>`;
     html += `<td style="white-space:nowrap">${fmtDisp(p.endDate)}</td>`;
     activeTypeFields.forEach(f => {
       html += `<td>${escHtml((p.typeFields||{})[f.key]||'')}</td>`;
     });
-    if(hasLocation) html += `<td>${escHtml(p.location||'')}</td>`;
+    if(hasLocation) html += `<td>${fmtLocationCell(p.location)}</td>`;
     if(hasContacts) {
-      const contacts = (p.contacts||[]).filter(c => c.name||c.phone||c.email);
-      html += '<td>' + contacts.map(c => escHtml([c.name,c.phone,c.email].filter(Boolean).join(', '))).join('<br>') + '</td>';
+      const contacts = (p.contacts||[]).filter(contactHasContent);
+      html += '<td>' + contacts.map(fmtContactLine).join('<br>') + '</td>';
     }
     if(hasNotes) html += `<td>${escHtml(p.notes||'')}</td>`;
     if(hasCustomFields) {
@@ -3845,10 +4563,23 @@ function renderListView() {
 // SIDEBAR SYNC
 // ═══════════════════════════════════════════════════
 
+const PLAN_NAME_PLACEHOLDERS = {
+  construction: 'e.g. Smith Kitchen Reno',
+  film:         'e.g. Untitled Short Film',
+  events:       'e.g. Sarah & Alex Wedding',
+  medical:      'e.g. Cycle 1',
+  generic:      'e.g. My Plan'
+};
+
 function syncSidebar() {
   document.getElementById('coInput').value    = state.co||'';
   document.getElementById('tagInput').value   = state.tag||'';
-  const pni = document.getElementById('planNameInput'); if(pni) pni.value = state.planName||'';
+  const pni = document.getElementById('planNameInput');
+  if(pni) {
+    pni.value = state.planName||'';
+    const type = state.estimate?.type || 'generic';
+    pni.placeholder = PLAN_NAME_PLACEHOLDERS[type] || PLAN_NAME_PLACEHOLDERS.generic;
+  }
   document.getElementById('accentInput').value = state.accent||'#111111';
   document.getElementById('accentHexInput').value = state.accent||'#111111';
   document.getElementById('startDateInput').value = state.startDate||TODAY_S;
@@ -4106,6 +4837,7 @@ function wire() {
     if(!phases.length) {
       html += '<p style="color:#999;font-style:italic;">No phases in this plan.</p>';
     } else {
+      const hasStatus = hasAnyStatus(phases);
       const hasLocation = phases.some(p => p.location);
       const hasNotes = phases.some(p => p.notes);
       const hasContacts = phases.some(p => p.contacts && p.contacts.length);
@@ -4116,7 +4848,9 @@ function wire() {
       const hasCustomFields = phases.some(p => p.customFields && p.customFields.length);
 
       html += '<div class="pr-table-wrap"><table><thead><tr>';
-      html += '<th>#</th><th>Phase</th><th>Start</th><th>End</th>';
+      html += '<th>#</th><th>Phase</th>';
+      if(hasStatus) html += '<th>Status</th>';
+      html += '<th>Start</th><th>End</th>';
       if(hasTypeFields) profile.forEach(f => { if(phases.some(p=>(p.typeFields||{})[f.key])) html += `<th>${escHtml(f.label)}</th>`; });
       if(hasLocation) html += '<th>Location</th>';
       if(hasContacts) html += '<th>Contacts</th>';
@@ -4128,6 +4862,7 @@ function wire() {
         html += '<tr>';
         html += `<td>${i+1}</td>`;
         html += `<td><span class="pr-color-dot" style="background:${p.color||'#111'}"></span>${escHtml(p.name)}</td>`;
+        if(hasStatus) html += `<td>${statusPill(p.status)}</td>`;
         html += `<td>${fmtDisp(p.startDate)}</td>`;
         html += `<td>${fmtDisp(p.endDate)}</td>`;
         if(hasTypeFields) {
@@ -4136,10 +4871,10 @@ function wire() {
             if(phases.some(ph=>(ph.typeFields||{})[f.key])) html += `<td>${escHtml(tf[f.key]||'')}</td>`;
           });
         }
-        if(hasLocation) html += `<td>${escHtml(p.location||'')}</td>`;
+        if(hasLocation) html += `<td>${fmtLocationCell(p.location)}</td>`;
         if(hasContacts) {
-          const contacts = (p.contacts||[]).filter(c=>c.name||c.phone||c.email);
-          html += '<td>' + contacts.map(c => escHtml([c.name,c.phone,c.email].filter(Boolean).join(', '))).join('<br>') + '</td>';
+          const contacts = (p.contacts||[]).filter(contactHasContent);
+          html += '<td>' + contacts.map(fmtContactLine).join('<br>') + '</td>';
         }
         if(hasNotes) html += `<td>${escHtml(p.notes||'')}</td>`;
         if(hasCustomFields) {
@@ -4412,8 +5147,8 @@ function mobSheetContent(tab) {
         <button class="add-ph-btn" style="width:100%;margin-top:8px" onclick="openAddManual();closeMobSheet()">+ Add phase</button>
         <button class="add-ph-btn" style="width:100%;margin-top:4px;border-color:#fca5a5;color:#dc2626;" onclick="document.getElementById('clearAllBtn').click();closeMobSheet()">✕ Clear all phases</button>
         <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
-          <button class="ico-btn" onclick="undo()" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 14px;font-size:12px;">↩ Undo</button>
-          <button class="ico-btn" onclick="redo()" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 14px;font-size:12px;">↪ Redo</button>
+          <button class="ico-btn" onclick="undo()" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h6a3 3 0 0 1 0 6H6"/><polyline points="6 5 3 8 6 11"/></svg>Undo</button>
+          <button class="ico-btn" onclick="redo()" style="border:1px solid var(--border);border-radius:var(--r-sm);padding:6px 14px;font-size:12px;display:inline-flex;align-items:center;gap:6px;"><svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8H6a3 3 0 0 0 0 6h4"/><polyline points="10 5 13 8 10 11"/></svg>Redo</button>
         </div>`;
     case 'branding':
       // Clone branding section content (skip inner sb-sec-label since sheet has its own title)
@@ -4433,8 +5168,9 @@ function mobSheetContent(tab) {
         const val = (state.estimate?.fields||{})[f.key] || '';
         return `<div class="sb-field">
           <label class="sb-label">${f.label}</label>
-          <input type="text" class="sb-input mob-est-input" data-key="${f.key}"
+          <input type="text" inputmode="decimal" class="sb-input mob-est-input" data-key="${f.key}"
             placeholder="0.00" value="${val}">
+          <div class="est-field-hint" data-hint-for="${f.key}" style="display:none;font-size:11px;color:#c0392b;margin-top:4px;line-height:1.4;"></div>
         </div>`;
       }).join('');
       const eTotal = estimateTotal();
@@ -4487,6 +5223,7 @@ function openMobSheet(tab) {
       inp.addEventListener('input', ev => {
         if(!state.estimate.fields) state.estimate.fields = {};
         state.estimate.fields[ev.target.dataset.key] = ev.target.value;
+        validateEstimateField(ev.target);
         if(ev.target.value && !state.estimate.enabled) {
           state.estimate.enabled = true;
           const tog = document.getElementById('estimateToggle');
@@ -4499,6 +5236,8 @@ function openMobSheet(tab) {
         if(disp) disp.textContent = total > 0 ? `Total: ${fmtMoney(total, cur)}` : '';
         afterStateChange();
       });
+      // Validate initial values on render
+      validateEstimateField(inp);
     });
   }
 
@@ -4529,6 +5268,13 @@ function wireMobile() {
 
   // popstate — browser back button
   window.addEventListener('popstate', ()=>{ if(!document.getElementById('landing').classList.contains('hidden')) return; showLanding(); });
+
+  // Strip title attrs on touch devices — iOS Safari renders them as tooltips on tap.
+  // Titles are only useful as desktop hover hints with keyboard shortcut reminders.
+  const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  if(isTouch) {
+    document.querySelectorAll('[title]').forEach(el => el.removeAttribute('title'));
+  }
 }
 
 // Push history state when entering app so browser back works
@@ -4716,6 +5462,10 @@ function wireSaveOnboarding() {
       </div>
     </div>
     <div class="drawer-field">
+      <label class="drawer-label">Status</label>
+      <div class="drawer-status-row" id="drawerStatusRow"></div>
+    </div>
+    <div class="drawer-field">
       <label class="drawer-label">Color</label>
       <div class="drawer-swatches" id="drawerSwatches"></div>
     </div>
@@ -4726,7 +5476,13 @@ function wireSaveOnboarding() {
     <!-- ─── Shared: Location + Notes ─── -->
     <div class="drawer-section-label">Details</div>
     <div class="drawer-field">
-      <label class="drawer-label">Location</label>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <label class="drawer-label" style="margin-bottom:0;">Location</label>
+        <a id="drawerLocationMap" href="#" target="_blank" rel="noopener"
+           style="display:none;font-size:11px;color:var(--ink-2);text-decoration:none;border-bottom:1px solid var(--border-2);padding-bottom:1px;">
+          Open in Maps ↗
+        </a>
+      </div>
       <input type="text" class="drawer-input" id="drawerLocation" placeholder="Address or place name">
     </div>
     <div class="drawer-field">
