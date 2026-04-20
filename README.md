@@ -24,10 +24,6 @@ Single static HTML file. No backend. State is client-side only.
 
 d00r is part of [0fam](https://0utput.co), a family of small, focused web apps. Every name drops a letter for a zero.
 
-## License
-
-MIT unless otherwise noted in specific files.
-
 ## Contact
 
 Built by [Ron Seidel](https://rontheron.com) · [hello@0utput.co](mailto:hello@0utput.co)
