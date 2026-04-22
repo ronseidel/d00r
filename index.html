@@ -547,6 +547,25 @@
     }
     body.is-dirty .copy-link-dot { display: inline-block; }
 
+    /* Webview hint — replaces Print/PDF button when detected in an in-app browser
+       (LinkedIn, Instagram, Facebook, etc.) where window.print() silently fails.
+       Hidden by default; shown via .is-webview class on <body>. We DROP the `body`
+       prefix so specificity (0,2,0) matches the mobile hide rule below — so on
+       mobile the later-declared `.hdr-actions .webview-hint { display: none }`
+       inside the @media block wins by declaration order. */
+    .webview-hint {
+      display: none;
+      font-size: 11px;
+      color: var(--ink-3);
+      font-style: italic;
+      padding: 0 6px;
+      letter-spacing: .2px;
+      max-width: 180px;
+      line-height: 1.3;
+    }
+    .is-webview .webview-hint { display: inline-block; }
+    .is-webview #printBtn { display: none !important; }
+
     .ico-btn {
       width: 32px;
       height: 32px;
@@ -1347,7 +1366,8 @@
       .hdr-spacer { display: none; }
       .hdr-actions .btn-outline,
       .hdr-actions .btn-solid,
-      .hdr-actions .ico-btn { display: none; }
+      .hdr-actions .ico-btn,
+      .hdr-actions .webview-hint { display: none; }
       .hdr-mob-overflow { display: flex !important; }
       .view-tog button { padding: 5px 7px; }
 
@@ -1440,7 +1460,13 @@
     }
     .door-back {
       position: absolute;
-      inset: 0;
+      /* inset 2px: keeps the darker back panel *inside* the card's outer edge.
+         At non-integer DPRs (Windows 125% scaling = DPR 1.25, etc.) the card
+         layer's antialiased 1-device-pixel edge bleeds the underlying color
+         through; insetting the back means the bleed lands on the page bg
+         instead of the dark panel. Cushions the monitor-resolution leak Ron
+         reported at work. Imperceptible during hover rotation. */
+      inset: 2px;
       background: #111111;
       border-radius: var(--r);
       display: flex;
@@ -1478,12 +1504,18 @@
       cursor: pointer;
       position: relative;
       transform-origin: left center;
-      transform-style: preserve-3d;
       transition: transform .45s cubic-bezier(.4,0,.2,1),
                   box-shadow .45s cubic-bezier(.4,0,.2,1);
-      will-change: transform;
     }
+    /* Compositor promotion (preserve-3d + will-change) ONLY on hover.
+       At rest the card stays on the main paint layer — no 1-device-pixel
+       antialias band that was bleeding the door-back through at DPR=1.25
+       (Windows 125% scaling) and other non-integer pixel densities. As a
+       bonus, text inside the card gets subpixel-RGB antialiasing at rest
+       (compositor layers can only do grayscale AA). */
     .door-wrap:hover .demo-card {
+      transform-style: preserve-3d;
+      will-change: transform;
       transform: rotateY(-28deg);
       box-shadow: 8px 12px 40px rgba(0,0,0,.22);
     }
@@ -1710,7 +1742,7 @@
         <span class="lfooter-dot">·</span>
         <span>d<span class="zero">00</span>r is in beta — feedback welcome</span>
       </div>
-      <div class="lfooter-row lfooter-ver">v89</div>
+      <div class="lfooter-row lfooter-ver">v91</div>
     </div>
   </footer>
 </div>
@@ -1747,6 +1779,7 @@
         <span class="copy-link-dot" id="copyLinkDot" title="Unsaved changes"></span>Copy Link
       </button>
       <button class="btn-solid" id="printBtn">Print / PDF</button>
+      <span class="webview-hint" id="webviewHint">Open in browser to export PDF</span>
     </div>
   </header>
 
@@ -1856,7 +1889,7 @@
           <button class="btn-solid" style="width:100%" id="copyUrlBtn">Copy URL</button>
         </div>
       </div>
-      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v89</div>
+      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v91</div>
     </aside>
 
     <!-- MAIN -->
@@ -1907,6 +1940,42 @@
 
 <script>
 /* CHANGELOG:
+   v91 - fix: door-back dark panel leaked through card edges at rest on
+         non-retina / Windows 125%-scaling monitors (reported by Ron on his
+         work monitor). Root cause: .demo-card had `will-change: transform` +
+         `transform-style: preserve-3d`, which promoted the card to its own
+         GPU compositor layer even at rest. That layer rasterizes at integer
+         device pixels, so at DPR=1.25 (125% scaling) or with fractional card
+         widths like 321.328125px, the edges got a 1-device-pixel antialias
+         band where the dark/colored door-back bled through. Retina displays
+         (DPR=2) hid it by subpixel cushion. Two-part fix: (1) inset .door-back
+         by 2px so any residual edge bleed lands on the white page bg instead
+         of the dark back, (2) move preserve-3d + will-change to :hover only,
+         so the card stays on the main paint layer at rest (no compositor
+         promotion = no antialias band + subpixel-RGB text AA as a bonus).
+         Hover rotation animation unchanged — preserve-3d + will-change kick
+         in the instant hover starts, before any transform movement is
+         perceptible. Verified with Playwright at DPR=1, 1.25, 1.5, 2 and by
+         10x-zoomed pixel inspection of card-edge antialiasing.
+   v90 - in-app browser (webview) handling for Print/PDF: window.print() silently
+         fails inside LinkedIn, Instagram, Facebook, TikTok, Slack, and similar
+         preview browsers. Rather than let users tap a dead button, detect the
+         webview at load and:
+           (1) hide the desktop Print/PDF button, show italic hint next to Copy
+               Link: "Open in browser to export PDF"
+           (2) in the mobile Share & Export sheet, swap the Print/PDF button for
+               a dashed-border hint panel with the same copy
+         Detection is layered and defensive: explicit app ID list (LinkedInApp,
+         FBAN, FBAV, Instagram, X/, TikTok, Slack, WhatsApp, MicroMessenger,
+         Line/, etc.), Android "; wv)" flag, and the iOS heuristic — if UA has
+         iPhone/iPad but no "Safari/" and no known alt iOS browser (CriOS,
+         FxiOS, EdgiOS, OPiOS), it's a WKWebView inside some app. That last one
+         is what catches LinkedIn even if they strip their custom ID. Real
+         Safari/Chrome/Firefox users are unaffected — full PDF flow intact.
+         Class-based: isWebview() → body.is-webview → CSS does the rest. Mobile
+         share sheet uses isWebview() directly since it re-renders on open.
+         Copy Link is already the primary share path for d00r, so in a webview
+         context it's the only action that actually makes sense.
    v89 - bumped both user-visible version badges (landing footer + sidebar label)
          from v82 → v89. Caught by Ron: I'd been updating the CHANGELOG comment
          on every release from v83–v88 but not touching the actual UI strings.
@@ -2245,6 +2314,42 @@
 */
 
 'use strict';
+
+// ═══════════════════════════════════════════════════
+// IN-APP BROWSER / WEBVIEW DETECTION
+// ═══════════════════════════════════════════════════
+// window.print() and blob-download links silently fail inside in-app webviews
+// (LinkedIn, Instagram, Facebook, X, TikTok, Slack, etc.). Rather than
+// let users tap a dead button, detect the webview and swap Print/PDF for a
+// small hint telling them to open the page in a real browser.
+//
+// Layered detection (any match → webview):
+//   1. Explicit app identifiers in UA (the common ones name themselves)
+//   2. Android standard webview flag: "; wv)" in UA
+//   3. iOS heuristic: UA has iPhone/iPad but no "Safari/" AND no known
+//      alternate iOS browser identifier (CriOS, FxiOS, EdgiOS, OPiOS).
+//      Real iOS Safari always includes "Safari/"; WKWebView inside apps
+//      does not. This catches LinkedIn even if they strip their custom ID.
+const APP_WEBVIEW_IDS = [
+  'LinkedInApp', 'FBAN', 'FBAV', 'FB_IAB', 'Instagram',
+  'Twitter', 'TwitterAndroid', 'X/', 'TikTok', 'BytedanceWebview',
+  'WhatsApp', 'Slack', 'MicroMessenger', 'Line/'
+];
+function isWebview() {
+  const ua = navigator.userAgent || '';
+  if (APP_WEBVIEW_IDS.some(id => ua.indexOf(id) !== -1)) return true;
+  if (/; wv\)/.test(ua)) return true; // Android webview
+  const isIOS = /iPhone|iPad|iPod/.test(ua);
+  if (isIOS) {
+    const hasSafari = /Safari\//.test(ua);
+    const hasAltBrowser = /(CriOS|FxiOS|EdgiOS|OPiOS)/.test(ua);
+    if (!hasSafari && !hasAltBrowser) return true;
+  }
+  return false;
+}
+function applyWebviewMode() {
+  if (isWebview()) document.body.classList.add('is-webview');
+}
 
 // ═══════════════════════════════════════════════════
 // CONSTANTS
@@ -5184,10 +5289,13 @@ function mobSheetContent(tab) {
         <div id="mobEstTotal" style="font-size:14px;font-weight:600;color:var(--ink);padding:8px 0 2px;border-top:1px solid var(--border);margin-top:8px;">${eTotalStr ? 'Total: '+eTotalStr : ''}</div>
       `;
     case 'share':
+      const shareAction = isWebview()
+        ? `<div style="width:100%;padding:12px;text-align:center;font-size:12px;color:var(--ink-3);font-style:italic;line-height:1.4;border:1px dashed var(--border);border-radius:8px;background:var(--bg-subtle,#F8F8F6);">Open in browser to export PDF</div>`
+        : `<button class="btn-solid" style="width:100%;padding:12px" onclick="document.getElementById('printBtn').click()">Print / PDF</button>`;
       return `
         <div class="sb-sec-label" style="margin-bottom:14px">Share & Export</div>
         <button class="btn-outline" style="width:100%;margin-bottom:10px;padding:12px" onclick="document.getElementById('copyLinkBtn').click()">Copy Link</button>
-        <button class="btn-solid" style="width:100%;padding:12px" onclick="document.getElementById('printBtn').click()">Print / PDF</button>`;
+        ${shareAction}`;
     default: return '';
   }
 }
@@ -5288,6 +5396,7 @@ const _origShowApp = showApp;
 // ═══════════════════════════════════════════════════
 
 document.addEventListener('DOMContentLoaded', ()=>{
+  applyWebviewMode();
   renderLanding();
 
   // Detect where state came from
