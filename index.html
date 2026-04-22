@@ -1830,7 +1830,7 @@
         <span class="lfooter-dot">·</span>
         <span>d<span class="zero">00</span>r is in beta — feedback welcome</span>
       </div>
-      <div class="lfooter-row lfooter-ver">v92</div>
+      <div class="lfooter-row lfooter-ver">v93</div>
     </div>
   </footer>
 </div>
@@ -1977,7 +1977,7 @@
           <button class="btn-solid" style="width:100%" id="copyUrlBtn">Copy URL</button>
         </div>
       </div>
-      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v92</div>
+      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v93</div>
     </aside>
 
     <!-- MAIN -->
@@ -2028,6 +2028,25 @@
 
 <script>
 /* CHANGELOG:
+   v93 - welcome modal now echoes the plan's accent color in three frame
+         locations: the company-name headline, the stat-block divider lines
+         (top + bottom), and the "d00r" footer link. Icons and view-picker
+         buttons stay neutral so the color shows up in role/identity
+         positions rather than on UI controls. Ron: "you're the Brooklyn
+         Nets. that's cool" — black accents render as confident monochrome,
+         not broken. No skip-if-black logic needed. For near-white accents
+         (e.g. cream #F5F5E8), the existing applyAccent() luminance
+         darkening kicks in at the :root level, producing readable dark
+         olive (#666628) instead of invisible-on-white.
+
+         Bug caught during testing: showWelcomeModal previously ended with
+         `ov.style.setProperty('--accent', state.accent||'#111111')` — a
+         scope-local override that bypassed applyAccent()'s legibility
+         darkening. A near-white plan would have rendered the headline
+         invisible. Removed that line; applyAccent() runs at the top of
+         showWelcomeModal now, writes to :root, modal inherits correctly.
+         Verified with Playwright across 5 accents: burgundy, teal,
+         black-default, near-white (darkening active), brand green.
    v92 - resume banner redesign: Ron flagged the existing diaper-yellow banner
          as looking accidental on mobile. New design uses d00r's brand green
          (#E4F3EE tinted bg, #028454 primary, #034D32 text) as a "this is
@@ -5579,6 +5598,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
 function showWelcomeModal() {
   const ov = document.getElementById('welcomeOverlay');
   if(!ov) return;
+  // Apply the plan's accent to :root's --accent (with luminance-based
+  // darkening for legibility on near-white values) before rendering the
+  // modal. This is what paints the company headline, stat dividers, and
+  // d00r footer link in the plan's color.
+  applyAccent();
   const co = state.co || 'Shared Plan';
   document.getElementById('welcomeCo').textContent = co;
   const tagEl = document.getElementById('welcomeTag');
@@ -5606,8 +5630,10 @@ function showWelcomeModal() {
       ? `<span>${state.estimate.label || 'Estimate'}: ${fmtMoney(estimateTotal(), state.estimate.currency||'$')}</span>` : '');
 
   ov.classList.add('open');
-  // Accent the view buttons
-  try { ov.style.setProperty('--accent', state.accent||'#111111'); } catch(e){}
+  // (Previously set --accent on the overlay directly, which bypassed the
+  // legibility darkening in applyAccent() for near-white plan accents.
+  // applyAccent() is now called at the top of this function and writes
+  // to :root, which the modal inherits.)
 }
 
 function closeWelcomeAndOpen(view) {
@@ -5858,10 +5884,10 @@ function wireSaveOnboarding() {
     animation:welcomePop .32s cubic-bezier(.2,.9,.3,1.1);
   ">
     <div style="font-family:'Space Mono',monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--ink-3);margin-bottom:14px;">Shared with you</div>
-    <h1 id="welcomeCo" style="font-family:var(--font-d);font-size:34px;font-weight:500;line-height:1.05;letter-spacing:-1px;margin-bottom:6px;color:var(--ink);">Plan</h1>
+    <h1 id="welcomeCo" style="font-family:var(--font-d);font-size:34px;font-weight:500;line-height:1.05;letter-spacing:-1px;margin-bottom:6px;color:var(--accent);">Plan</h1>
     <div id="welcomeTag" style="font-family:var(--font-d);font-style:italic;font-size:15px;color:var(--ink-2);line-height:1.5;margin-bottom:8px;"></div>
     <div id="welcomePlanName" style="font-size:13px;color:var(--ink-3);margin-bottom:24px;"></div>
-    <div id="welcomeStats" style="display:flex;gap:16px;padding:14px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-bottom:20px;font-size:12px;color:var(--ink-2);"></div>
+    <div id="welcomeStats" style="display:flex;gap:16px;padding:14px 0;border-top:1px solid var(--accent);border-bottom:1px solid var(--accent);margin-bottom:20px;font-size:12px;color:var(--ink-2);"></div>
     <div style="font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px;">Choose how to view this plan</div>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:6px;">
       <button class="welcome-view-btn" data-view="month">
@@ -5878,7 +5904,7 @@ function wireSaveOnboarding() {
       </button>
     </div>
     <div style="font-size:11px;color:var(--ink-3);text-align:center;margin-top:20px;padding-top:14px;border-top:1px solid var(--border);">
-      Built with <a href="?" style="color:var(--ink-2);text-decoration:underline;">d00r</a> — a free visual timeline builder
+      Built with <a href="?" style="color:var(--accent);text-decoration:underline;">d00r</a> — a free visual timeline builder
     </div>
   </div>
 </div>
