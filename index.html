@@ -547,6 +547,93 @@
     }
     body.is-dirty .copy-link-dot { display: inline-block; }
 
+    /* Resume banner — brand-tinted, stacked layout. Shown at top of landing
+       when localStorage has an autosaved plan. Text above, two buttons below.
+       Non-destructive by design: "Not now" hides the banner but keeps the
+       autosave; "Resume" loads it. The close × also just hides.
+
+       Colors are HARDCODED hex (not var(--accent)) because d00r's --accent
+       is a per-plan theming variable the user controls — so it could be
+       anything (black, magenta, teal). The banner's brand-green identity
+       should be consistent regardless of the saved plan's accent, so the
+       values live here as literals. */
+    .resume-banner {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px 16px;
+      background: #E4F3EE;            /* margo.fyi accent-bg */
+      border-bottom: 1px solid #C0DDD4;
+      color: #034D32;                  /* margo.fyi dark ink */
+      font-size: 13px;
+      position: relative;
+      box-sizing: border-box;
+    }
+    .resume-banner.visible { display: flex; }
+    .resume-banner-text {
+      line-height: 1.4;
+      padding-right: 28px; /* room for close × */
+    }
+    .resume-banner-text strong { font-weight: 600; }
+    .resume-banner-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .resume-banner-btn {
+      flex: 1;
+      padding: 9px 14px;
+      font-size: 13px;
+      font-family: inherit;
+      font-weight: 500;
+      border-radius: 6px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background .15s, transform .1s;
+    }
+    .resume-banner-btn:active { transform: translateY(1px); }
+    .resume-banner-btn-primary {
+      background: #028454;             /* margo.fyi brand green */
+      border-color: #028454;
+      color: #ffffff;
+    }
+    .resume-banner-btn-primary:hover { background: #027048; }
+    .resume-banner-btn-secondary {
+      background: transparent;
+      border-color: #C0DDD4;
+      color: #034D32;
+    }
+    .resume-banner-btn-secondary:hover { background: #D6EBE3; }
+    .resume-banner-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+      padding: 4px 6px;
+      color: #034D32;
+      opacity: 0.55;
+      font-family: inherit;
+    }
+    .resume-banner-close:hover { opacity: 1; }
+
+    /* Desktop: inline the text and buttons on a single row when there's room */
+    @media (min-width: 640px) {
+      .resume-banner {
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        padding: 12px 44px 12px 20px;
+      }
+      .resume-banner-text { padding-right: 0; }
+      .resume-banner-actions { flex: 0 0 auto; }
+      .resume-banner-btn { flex: 0 0 auto; padding: 7px 14px; font-size: 12px; }
+    }
+
     /* Webview hint — replaces Print/PDF button when detected in an in-app browser
        (LinkedIn, Instagram, Facebook, etc.) where window.print() silently fails.
        Hidden by default; shown via .is-webview class on <body>. We DROP the `body`
@@ -1681,17 +1768,18 @@
      LANDING
 ═══════════════════════════════════════════════════ -->
 <div id="landing">
-  <!-- Resume banner (shown when localStorage has an unfinished plan) -->
-  <div id="resumeBanner" style="
-    display:none;width:100%;
-    background:linear-gradient(90deg,#FFF7E6 0%,#FFFDF7 100%);
-    border-bottom:1px solid #F0DCA8;
-    padding:12px 20px;align-items:center;justify-content:center;gap:14px;
-    font-size:13px;color:#7A5A0A;flex-wrap:wrap;
-  ">
-    <span id="resumeBannerText">You have an unfinished plan saved in this browser.</span>
-    <button id="resumeBtn" class="btn-solid" style="padding:6px 14px;font-size:12px;">Resume</button>
-    <button id="dismissResumeBtn" title="Dismiss" style="background:none;border:none;color:#7A5A0A;cursor:pointer;font-size:20px;line-height:1;padding:0 4px;">×</button>
+  <!-- Resume banner (shown when localStorage has an unfinished plan).
+       Non-destructive: Resume loads saved state; Not now hides banner but
+       keeps the autosave so user can resume next time. Close × same as
+       Not now. No destructive discard in this banner — a fresh "Start from
+       scratch" already prompts the user to confirm if it would overwrite. -->
+  <div id="resumeBanner" class="resume-banner">
+    <button class="resume-banner-close" id="dismissResumeBtn" aria-label="Dismiss" title="Dismiss">×</button>
+    <div class="resume-banner-text" id="resumeBannerText">You have an unfinished plan saved in this browser.</div>
+    <div class="resume-banner-actions">
+      <button class="resume-banner-btn resume-banner-btn-secondary" id="notNowResumeBtn">Not now</button>
+      <button class="resume-banner-btn resume-banner-btn-primary" id="resumeBtn">Resume</button>
+    </div>
   </div>
   <nav class="lnav">
     <div style="display:flex;align-items:baseline;">
@@ -1742,7 +1830,7 @@
         <span class="lfooter-dot">·</span>
         <span>d<span class="zero">00</span>r is in beta — feedback welcome</span>
       </div>
-      <div class="lfooter-row lfooter-ver">v91</div>
+      <div class="lfooter-row lfooter-ver">v92</div>
     </div>
   </footer>
 </div>
@@ -1889,7 +1977,7 @@
           <button class="btn-solid" style="width:100%" id="copyUrlBtn">Copy URL</button>
         </div>
       </div>
-      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v91</div>
+      <div style="padding:12px 16px;font-size:10px;color:var(--ink-3);letter-spacing:.3px;font-family:'Space Mono',monospace;">v92</div>
     </aside>
 
     <!-- MAIN -->
@@ -1940,6 +2028,27 @@
 
 <script>
 /* CHANGELOG:
+   v92 - resume banner redesign: Ron flagged the existing diaper-yellow banner
+         as looking accidental on mobile. New design uses d00r's brand green
+         (#E4F3EE tinted bg, #028454 primary, #034D32 text) as a "this is
+         your d00r stuff" signal rather than a warning. Layout changed from
+         inline (text + Resume + ×) to stacked on mobile (text on top, two
+         buttons below: Not now / Resume) and inline row on desktop (≥640px).
+         Non-destructive throughout: Not now and × both just hide the banner,
+         keeping the autosave available next visit. No clear/destroy action.
+         Moved all banner styles from inline style="..." into .resume-banner
+         class hierarchy so the markup is readable and the mobile/desktop
+         responsive rules live with the rest of the design system.
+
+         Second bug caught during testing (would have shipped quietly):
+         initial implementation used var(--accent, #028454) for the Resume
+         button, but --accent is d00r's user-controlled theming variable
+         (every plan can set its own color). Result: a plan with a black
+         accent (the default) made Resume render pure black instead of
+         brand green. Fixed by hardcoding #028454 / #034D32 / #C0DDD4 /
+         #E4F3EE as literals in the banner CSS with an explainer comment,
+         since the banner's brand identity should be consistent regardless
+         of the saved plan's accent.
    v91 - fix: door-back dark panel leaked through card edges at rest on
          non-retina / Windows 125%-scaling monitors (reported by Ron on his
          work monitor). Root cause: .demo-card had `will-change: transform` +
@@ -5532,10 +5641,15 @@ function wireSaveOnboarding() {
       toast('Plan restored.');
     }
   });
-  const dismissBtn = document.getElementById('dismissResumeBtn');
-  if(dismissBtn) dismissBtn.addEventListener('click', () => {
+  // Both the close × and the "Not now" button hide the banner without
+  // clearing the autosave — the user can still resume it later by reloading.
+  const hideResumeBanner = () => {
     document.getElementById('resumeBanner').classList.remove('visible');
-  });
+  };
+  const dismissBtn = document.getElementById('dismissResumeBtn');
+  if(dismissBtn) dismissBtn.addEventListener('click', hideResumeBanner);
+  const notNowBtn = document.getElementById('notNowResumeBtn');
+  if(notNowBtn) notNowBtn.addEventListener('click', hideResumeBanner);
 
   // beforeunload: warn on close with unsaved (non-synced) meaningful changes
   window.addEventListener('beforeunload', (e) => {
